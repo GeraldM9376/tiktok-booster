@@ -14,9 +14,6 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  // Fetch all profiles. Notice the '!user_id' syntax.
-  // This tells Supabase to specifically use the user_id column for the join, 
-  // preventing the "multiple relationships found" error.
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
@@ -27,7 +24,8 @@ async function UsersContent() {
       wallets (available_balance),
       user_roles (roles (name)),
       earner_profiles!user_id (approved),
-      creator_profiles!user_id (approved)
+      creator_profiles!user_id (approved),
+      user_ranks (status, rank_packages (name))
     `)
     .order("created_at", { ascending: false });
 
@@ -51,7 +49,7 @@ async function UsersContent() {
               <tr>
                 <th className="px-4 py-3 font-medium">User</th>
                 <th className="px-4 py-3 font-medium">Role</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Rank</th>
                 <th className="px-4 py-3 font-medium">Balance</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -61,9 +59,11 @@ async function UsersContent() {
               {profiles?.map((profile) => {
                 const role = (profile.user_roles as any)?.[0]?.roles?.name || "earner";
                 const balance = (profile.wallets as any)?.[0]?.available_balance || 0;
-                const earnerApproved = (profile.earner_profiles as any)?.[0]?.approved;
-                const creatorApproved = (profile.creator_profiles as any)?.[0]?.approved;
-                const isApproved = role === "earner" ? earnerApproved : (role === "creator" ? creatorApproved : true);
+                
+                // Safely extract rank info
+                const userRank = (profile.user_ranks as any)?.[0];
+                const rankName = userRank?.rank_packages?.name || "Unranked";
+                const rankStatus = userRank?.status || "none";
 
                 return (
                   <tr key={profile.id} className="hover:bg-secondary/20">
@@ -85,9 +85,14 @@ async function UsersContent() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={isApproved ? "default" : "outline"}>
-                        {isApproved ? "Active" : "Pending"}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold">{rankName}</span>
+                        {rankStatus !== "none" && (
+                          <Badge variant={rankStatus === "approved" ? "default" : rankStatus === "rejected" ? "destructive" : "outline"} className="w-max text-[10px]">
+                            {rankStatus.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 font-semibold">{balance.toLocaleString()}</td>
                     <td className="px-4 py-3 text-muted-foreground">
