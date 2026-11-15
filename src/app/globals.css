@@ -1,202 +1,50 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
-/* =========================================================================
-   TikTok Booster — Design Tokens
-   Dark-first. Charcoal base, neon lime primary, purple highlight.
-   Light-mode values are also provided so the theme switcher has
-   something to switch to.
-   ========================================================================= */
-
-:root {
-  --radius: 0.75rem;
-
-  /* Light mode (fallback if user forces light) */
-  --background: oklch(0.98 0.002 270);
-  --foreground: oklch(0.16 0.01 270);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.01 270);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.01 270);
-  --primary: oklch(0.6 0.2 295); /* purple — used sparingly in light mode */
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.94 0.01 270);
-  --secondary-foreground: oklch(0.2 0.02 270);
-  --muted: oklch(0.94 0.01 270);
-  --muted-foreground: oklch(0.5 0.02 270);
-  --accent: oklch(0.88 0.22 130); /* neon lime */
-  --accent-foreground: oklch(0.18 0.03 130);
-  --destructive: oklch(0.6 0.24 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.9 0.01 270);
-  --input: oklch(0.9 0.01 270);
-  --ring: oklch(0.6 0.2 295);
-  --chart-1: oklch(0.88 0.22 130); /* lime */
-  --chart-2: oklch(0.65 0.24 295); /* purple */
-  --chart-3: oklch(0.75 0.15 200); /* cyan */
-  --chart-4: oklch(0.78 0.15 60);  /* amber */
-  --chart-5: oklch(0.68 0.2 340);  /* pink */
-  --sidebar: oklch(0.98 0.002 270);
-  --sidebar-foreground: oklch(0.16 0.01 270);
-  --sidebar-primary: oklch(0.6 0.2 295);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.94 0.01 270);
-  --sidebar-accent-foreground: oklch(0.2 0.02 270);
-  --sidebar-border: oklch(0.9 0.01 270);
-  --sidebar-ring: oklch(0.6 0.2 295);
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 88 100% 62%; /* Neon Lime */
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 270 100% 70%; /* Purple */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 88 100% 62%;
+    --radius: 0.75rem;
+  }
 }
 
-.dark {
-  /* Dark — this is the DEFAULT theme for TikTok Booster */
-  --background: oklch(0.14 0.01 270);          /* charcoal */
-  --foreground: oklch(0.97 0.005 270);         /* near-white */
-  --card: oklch(0.18 0.012 270);               /* slightly lighter charcoal */
-  --card-foreground: oklch(0.97 0.005 270);
-  --popover: oklch(0.18 0.012 270);
-  --popover-foreground: oklch(0.97 0.005 270);
-  --primary: oklch(0.88 0.22 130);             /* NEON LIME */
-  --primary-foreground: oklch(0.14 0.03 130);  /* dark text on lime */
-  --secondary: oklch(0.24 0.015 270);
-  --secondary-foreground: oklch(0.97 0.005 270);
-  --muted: oklch(0.24 0.015 270);
-  --muted-foreground: oklch(0.68 0.02 270);
-  --accent: oklch(0.65 0.24 295);              /* PURPLE highlight */
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.65 0.24 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.015 270);
-  --input: oklch(0.28 0.015 270);
-  --ring: oklch(0.65 0.24 295);
-  --chart-1: oklch(0.88 0.22 130);
-  --chart-2: oklch(0.65 0.24 295);
-  --chart-3: oklch(0.75 0.15 200);
-  --chart-4: oklch(0.78 0.15 60);
-  --chart-5: oklch(0.68 0.2 340);
-  --sidebar: oklch(0.12 0.012 270);
-  --sidebar-foreground: oklch(0.9 0.01 270);
-  --sidebar-primary: oklch(0.88 0.22 130);
-  --sidebar-primary-foreground: oklch(0.14 0.03 130);
-  --sidebar-accent: oklch(0.22 0.015 270);
-  --sidebar-accent-foreground: oklch(0.97 0.005 270);
-  --sidebar-border: oklch(0.22 0.015 270);
-  --sidebar-ring: oklch(0.65 0.24 295);
-}
-
-/* ----- Map tokens to Tailwind v4 utility names ----- */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, monospace);
-}
-
-/* ----- Base layer ----- */
 @layer base {
   * {
-    border-color: var(--border);
-    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+    border-color: theme('colors.zinc.800');
   }
-
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  ::selection {
-    background-color: color-mix(in oklab, var(--primary) 40%, transparent);
-    color: var(--foreground);
+    background-color: #09090b; /* zinc-950 */
+    color: #fafafa; /* zinc-50 */
   }
 }
 
-/* ----- Utility helpers used across the app ----- */
-@layer utilities {
-  /* Subtle frosted-glass card */
-  .glass {
-    background-color: color-mix(in oklab, var(--card) 70%, transparent);
-    backdrop-filter: blur(12px) saturate(140%);
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
-  }
-
-  /* Animated gradient text — used for the wordmark */
-  .text-gradient {
-    background-image: linear-gradient(
-      90deg,
-      var(--primary),
-      var(--accent),
-      var(--primary)
-    );
-    background-size: 200% 100%;
-    background-clip: text;
-    color: transparent;
-    -webkit-background-clip: text;
-    animation: gradient-pan 8s linear infinite;
-  }
-
-  /* Animated gradient background — used by the landing hero */
-  .bg-aurora {
-    background:
-      radial-gradient(60% 50% at 20% 10%, color-mix(in oklab, var(--primary) 25%, transparent), transparent 60%),
-      radial-gradient(50% 40% at 85% 20%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 60%),
-      radial-gradient(70% 60% at 50% 100%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 65%),
-      var(--background);
-  }
-
-  .shadow-glow {
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent),
-      0 10px 40px -10px color-mix(in oklab, var(--primary) 45%, transparent);
-  }
-
-  .shadow-glow-purple {
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--accent) 25%, transparent),
-      0 10px 40px -10px color-mix(in oklab, var(--accent) 45%, transparent);
-  }
+/* Custom utility for glass effect */
+.glass {
+  background-color: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(39, 39, 42, 0.8);
 }
 
-@keyframes gradient-pan {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+.text-gradient {
+  background: linear-gradient(to right, #22d3ee, #fb7185);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
