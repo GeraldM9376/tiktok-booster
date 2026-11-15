@@ -8,8 +8,17 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
 
-export function WithdrawalForm({ availableBalance, qualifiedReferrals }: { availableBalance: number; qualifiedReferrals: number }) {
+export function WithdrawalForm({ 
+  availableBalance, 
+  qualifiedReferrals,
+  hasPaymentDetails 
+}: { 
+  availableBalance: number; 
+  qualifiedReferrals: number;
+  hasPaymentDetails: boolean;
+}) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,13 +31,11 @@ export function WithdrawalForm({ availableBalance, qualifiedReferrals }: { avail
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    // If they don't have enough balance, stop them.
     if (!hasEnoughBalance) {
       toast.error(`You need at least ${minAmount} credits to withdraw.`);
       return;
     }
 
-    // If they are trying to submit but have no referrals, show the warning UI
     if (!hasEnoughReferrals) {
       setShowReferralWarning(true);
       return;
@@ -72,7 +79,24 @@ export function WithdrawalForm({ availableBalance, qualifiedReferrals }: { avail
         </div>
       </div>
 
-      {/* Only show if balance is insufficient */}
+      {!hasPaymentDetails && (
+        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Payment Details Missing</p>
+            <p className="text-sm">You must set up your payment details in Settings before you can withdraw.</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+              onClick={() => router.push("/earn/settings")}
+            >
+              Go to Settings
+            </Button>
+          </div>
+        </div>
+      )}
+
       {!hasEnoughBalance && (
         <div className="p-3 rounded-lg bg-red-500/10 text-red-500 text-sm border border-red-500/20">
           You need at least {minAmount} credits to request a withdrawal. Keep completing tasks!
@@ -89,21 +113,23 @@ export function WithdrawalForm({ availableBalance, qualifiedReferrals }: { avail
             value={amount}
             onChange={(e) => {
               setAmount(e.target.value);
-              // Hide the warning if they change the amount
               if (showReferralWarning) setShowReferralWarning(false);
             }}
             min={minAmount}
             max={availableBalance}
-            disabled={!hasEnoughBalance}
+            disabled={!hasEnoughBalance || !hasPaymentDetails}
             required
           />
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading || !hasEnoughBalance}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isLoading || !hasEnoughBalance || !hasPaymentDetails}
+        >
           {isLoading ? "Submitting..." : "Request Withdrawal"}
         </Button>
       </form>
 
-      {/* Referral warning ONLY appears if they have the balance but try to submit without referrals */}
       {showReferralWarning && !hasEnoughReferrals && (
         <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 text-sm animate-in fade-in slide-in-from-top-2">
           <p className="font-semibold mb-1">Referral Requirement</p>

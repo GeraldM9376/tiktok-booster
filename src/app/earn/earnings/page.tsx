@@ -4,7 +4,8 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { WithdrawalForm } from "./withdrawal-form";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 async function EarningsContent() {
   const supabase = await createClient();
@@ -14,6 +15,12 @@ async function EarningsContent() {
   const { data: wallet } = await supabase
     .from("wallets")
     .select("available_balance")
+    .eq("user_id", user.id)
+    .single();
+
+  const { data: profile } = await supabase
+    .from("earner_profiles")
+    .select("payment_details")
     .eq("user_id", user.id)
     .single();
 
@@ -31,9 +38,24 @@ async function EarningsContent() {
           Request a payout of your earned credits.
         </p>
       </div>
+
+      {!profile?.payment_details && (
+        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <div>
+            <p className="font-semibold">Payment Details Missing</p>
+            <p className="text-sm">You must set up your payment details before you can withdraw.</p>
+            <Link href="/earn/settings" className="text-sm font-bold underline mt-1 inline-block">
+              Go to Settings
+            </Link>
+          </div>
+        </div>
+      )}
+
       <WithdrawalForm 
         availableBalance={wallet?.available_balance || 0}
         qualifiedReferrals={qualifiedReferrals || 0}
+        hasPaymentDetails={!!profile?.payment_details}
       />
     </div>
   );

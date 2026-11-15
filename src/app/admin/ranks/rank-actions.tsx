@@ -18,17 +18,40 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
+    // 1. Update user_ranks status
+    const { error: updateError } = await supabase
       .from("user_ranks")
       .update({ status, approved_by: user.id, approved_at: new Date().toISOString() })
       .eq("user_id", userId);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`Rank ${status}!`);
-      router.refresh();
+    if (updateError) {
+      toast.error(updateError.message);
+      setIsLoading(false);
+      return;
     }
+
+    // 2. If approved, award referral commission
+    if (status === "approved") {
+      // Get the price of the rank
+      const { data: rankData } = await supabase
+        .from("user_ranks")
+        .select("rank_packages(tier_value)")
+        .eq("user_id", userId)
+        .single();
+
+      const price = (rankData?.rank_packages as any)?.tier_value || 0;
+
+      if (price > 0) {
+        // Call our secure function
+        await supabase.rpc("award_referral_commission", {
+          referred_user_id: userId,
+          rank_price: price,
+        });
+      }
+    }
+
+    toast.success(`Rank ${status}!`);
+    router.refresh();
     setIsLoading(false);
   }
 

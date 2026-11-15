@@ -37,10 +37,12 @@ export const site = {
       { label: "Overview", href: "/admin/dashboard" },
       { label: "Users", href: "/admin/users" },
       { label: "Rank Approvals", href: "/admin/ranks" },
+      { label: "Referrals", href: "/admin/referrals" }, // NEW
+      { label: "Transactions", href: "/admin/transactions" }, // NEW
       { label: "Top-Ups", href: "/admin/topups" },
       { label: "Withdrawals", href: "/admin/withdrawals" },
       { label: "Audit", href: "/admin/audit" },
-      { label: "Settings", href: "/admin/settings" }, // <-- Ensure this exists
+      { label: "Settings", href: "/admin/settings" },
     ],
   },
   auth: {

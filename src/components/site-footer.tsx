@@ -29,9 +29,8 @@ export function SiteFooter() {
             <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link href="/terms" className="hover:text-foreground">Terms</Link>
             <Link href="/contact" className="hover:text-foreground">Contact</Link>
-            <Link href="/earn/auth" className="hover:text-foreground">Earn</Link>
-            <Link href="/creator/auth" className="hover:text-foreground">Creator</Link>
-            <Link href="/admin/auth" className="hover:text-foreground">Admin</Link>
+            <Link href="/earn/auth" className="hover:text-foreground">Create Earning Acc</Link>
+            <Link href="/creator/auth" className="hover:text-foreground">Create Boost Acc</Link>
           </nav>
         </div>
 
