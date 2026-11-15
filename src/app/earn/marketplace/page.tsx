@@ -1,65 +1,46 @@
 // src/app/earn/marketplace/page.tsx
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
-import { MarketplaceFilters } from "@/components/earn/marketplace-filters";
-import { MarketplaceGrid } from "@/components/earn/marketplace-grid";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
-const PAGE_SIZE = 24;
-
-export default async function MarketplacePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; q?: string; niche?: string }>;
-}) {
-  const params = await searchParams;
-  const currentPage = Number(params.page) || 1;
-  const searchQuery = params.q || "";
-  const nicheId = params.niche || "";
-
+export default async function MarketplacePage() {
   const supabase = await createClient();
+  
+  // Fetch just 10 creators
+  const { data: creators, error } = await supabase
+    .from("creators")
+    .select("*")
+    .limit(10);
 
-  let query = supabase.from("creators").select("*, niches(name)", { count: "exact" });
-  if (searchQuery) query = query.ilike("username", `%${searchQuery}%`);
-  if (nicheId) query = query.eq("niche_id", nicheId);
-
-  const from = (currentPage - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-
-  const { data: creators, count, error } = await query
-    .order("follower_count", { ascending: false })
-    .range(from, to);
-
-  // If there's a database error, throw it so the error.tsx boundary catches it
   if (error) {
-    throw new Error(`Database Error: ${error.message}`);
+    return (
+      <DashboardShell type="earner" authPath="/earn/auth">
+        <div className="p-10 text-red-500">Database Error: {error.message}</div>
+      </DashboardShell>
+    );
   }
-
-  const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
-  const { data: niches } = await supabase.from("niches").select("*").order("name");
 
   return (
     <DashboardShell type="earner" authPath="/earn/auth">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <MarketplaceFilters
-          niches={niches || []}
-          searchQuery={searchQuery}
-          nicheId={nicheId}
-        />
-
-        {creators && creators.length > 0 ? (
-          <MarketplaceGrid
-            creators={creators}
-            count={count}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            searchQuery={searchQuery}
-            nicheId={nicheId}
-          />
-        ) : (
-          <div className="glass rounded-xl py-20 text-center">
-            <p className="text-muted-foreground">No creators found matching your search.</p>
-          </div>
-        )}
+      <div className="mx-auto max-w-4xl space-y-6">
+        <h1 className="text-3xl font-bold">Marketplace Test</h1>
+        <p>Found {creators?.length || 0} creators.</p>
+        
+        <div className="grid grid-cols-2 gap-4">
+          {creators?.map((creator) => (
+            <div key={creator.id} className="p-4 border rounded-xl flex gap-3 items-center">
+              <Avatar>
+                <AvatarImage src={creator.avatar_url || ""} />
+                <AvatarFallback>?</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-bold">{creator.username}</p>
+                <p className="text-xs text-muted-foreground">{creator.display_name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </DashboardShell>
   );
