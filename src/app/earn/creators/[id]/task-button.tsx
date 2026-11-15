@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart, UserPlus, Check } from "lucide-react";
+import { Heart, UserPlus, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,11 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
       return;
     }
 
-    // Reward amounts: 10 for follow, 1 for like
     const reward = type === "follow" ? 10 : 1;
     const result = await completeTask(user.id, type, targetId, reward);
 
     if (result.error) {
       toast.error(result.error);
-      // If the error is about rank, redirect them
       if (result.error.includes("active rank")) {
         router.push("/earn/rank");
       }
@@ -67,23 +66,44 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
     setIsLoading(false);
   }
 
+  // Render Follow Button with Earn More
   if (type === "follow") {
+    if (completed) {
+      return (
+        <div className="flex items-center gap-2 w-full">
+          <Button
+            disabled
+            className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/20"
+          >
+            <Check className="mr-2 h-4 w-4" /> Followed
+          </Button>
+          <Button asChild variant="default" className="shadow-glow">
+            <Link href={`/earn/creators/${targetId}`}>
+              Earn More <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <Button
-        size="lg"
         onClick={handleTask}
-        disabled={isLoading || completed}
-        className={`min-w-[160px] transition-all ${completed ? "bg-secondary text-foreground" : "shadow-glow"}`}
+        disabled={isLoading}
+        className="w-full shadow-glow"
       >
-        {completed ? (
-          <><Check className="mr-2 h-5 w-5" /> Followed</>
+        {isLoading ? (
+          "Processing..."
         ) : (
-          <><UserPlus className="mr-2 h-5 w-5" /> Follow (+10)</>
+          <>
+            <UserPlus className="mr-2 h-4 w-4" /> Follow (+10)
+          </>
         )}
       </Button>
     );
   }
 
+  // Render Like Button (Heart)
   return (
     <motion.button
       whileTap={{ scale: 0.8 }}
