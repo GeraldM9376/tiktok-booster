@@ -30,16 +30,16 @@ async function RankContent() {
   const paybill = settings?.find(s => s.key === "payment_paybill")?.value || "400200";
   const account = settings?.find(s => s.key === "payment_account")?.value || "TIKTOKBOOSTER";
 
-  const currentRankId = userRank?.rank_id;
+  const currentRankId = userRank?.rank_id || 0;
   const isPending = userRank?.status === "pending";
-  const isApproved = userRank?.status === "approved";
+  const currentRankName = (userRank?.rank_packages as any)?.name || "Unranked";
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Ranks</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Purchase a rank to unlock daily tasks and start earning credits.
+          Upgrade your rank to unlock higher daily task limits.
         </p>
       </div>
 
@@ -53,42 +53,20 @@ async function RankContent() {
         </div>
       )}
 
-      {!isApproved && !isPending ? (
-        <RankUpgradeClient ranks={ranks || []} paybill={paybill} account={account} />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {ranks?.map((rank) => {
-            const isCurrent = currentRankId === rank.id && isApproved;
-            const isUnlocked = currentRankId >= rank.id && isApproved;
-
-            return (
-              <div key={rank.id} className={`glass rounded-xl p-6 flex flex-col ${isCurrent ? "border-primary shadow-glow" : ""}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex gap-1">
-                    {Array.from({ length: rank.stars }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-primary fill-primary" />
-                    ))}
-                  </div>
-                  {isCurrent && <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded">ACTIVE</span>}
-                  {!isUnlocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <h3 className="text-lg font-bold">{rank.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">Value: {rank.tier_value.toLocaleString()} Ksh</p>
-                <ul className="space-y-2 text-sm mt-auto">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className={`h-4 w-4 ${isUnlocked ? "text-green-500" : "text-muted-foreground"}`} />
-                    <span>{rank.daily_follow_tasks} Follows / day</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className={`h-4 w-4 ${isUnlocked ? "text-green-500" : "text-muted-foreground"}`} />
-                    <span>{rank.daily_like_tasks} Likes / day</span>
-                  </li>
-                </ul>
-              </div>
-            );
-          })}
+      <div className="glass rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+        <div>
+          <p className="text-sm text-muted-foreground">Current Plan</p>
+          <h2 className="text-2xl font-bold">{isPending ? "Pending Upgrade" : currentRankName}</h2>
         </div>
-      )}
+      </div>
+
+      {/* Always show the upgrade client, passing the current rank ID */}
+      <RankUpgradeClient 
+        ranks={ranks || []} 
+        paybill={paybill} 
+        account={account} 
+        currentRankId={currentRankId} 
+      />
     </div>
   );
 }

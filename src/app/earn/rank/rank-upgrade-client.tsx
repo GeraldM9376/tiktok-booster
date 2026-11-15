@@ -4,25 +4,39 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Star, CheckCircle2 } from "lucide-react";
+import { Star, CheckCircle2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 
-export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], paybill: string, account: string }) {
+export function RankUpgradeClient({ 
+  ranks, 
+  paybill, 
+  account, 
+  currentRankId 
+}: { 
+  ranks: any[], 
+  paybill: string, 
+  account: string,
+  currentRankId: number 
+}) {
   const [selectedRank, setSelectedRank] = useState<any>(null);
   const [mpesaCode, setMpesaCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   
-  // Reference to the payment section to scroll to it
   const paymentRef = useRef<HTMLDivElement>(null);
 
   function handleRankSelect(rank: any) {
+    // Prevent selecting a rank that is lower or equal to current
+    if (rank.id <= currentRankId) {
+      toast.error("You already have this rank or higher.");
+      return;
+    }
+    
     setSelectedRank(rank);
-    // Smooth scroll to payment form
     setTimeout(() => {
       paymentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
@@ -32,10 +46,9 @@ export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], p
     e.preventDefault();
     if (!selectedRank) return;
 
-    // Validate M-Pesa code (10 characters, alphanumeric)
     const codeRegex = /^[A-Z0-9]{10}$/i;
     if (!codeRegex.test(mpesaCode)) {
-      toast.error("Invalid M-Pesa code. It must be exactly 10 characters (e.g., QWE123RTY4).");
+      toast.error("Invalid M-Pesa code. It must be exactly 10 characters.");
       return;
     }
 
@@ -44,6 +57,7 @@ export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], p
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // The RPC function will now overwrite the existing rank due to ON CONFLICT
     const { error } = await supabase.rpc("request_rank_upgrade", {
       p_user_id: user.id,
       p_rank_id: selectedRank.id,
@@ -53,7 +67,7 @@ export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], p
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Rank request submitted! Awaiting admin approval.");
+      toast.success("Upgrade request submitted! Awaiting admin approval.");
       router.refresh();
     }
     setIsLoading(false);
@@ -61,39 +75,44 @@ export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], p
 
   return (
     <div className="space-y-8">
-      {/* Rank Selection Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ranks.map((rank) => (
-          <Card
-            key={rank.id}
-            onClick={() => handleRankSelect(rank)}
-            className={`p-6 cursor-pointer transition-all ${
-              selectedRank?.id === rank.id ? "border-primary shadow-glow scale-105" : "hover:border-primary/50"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-1">
-                {Array.from({ length: rank.stars }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-primary fill-primary" />
-                ))}
+        {ranks.map((rank) => {
+          const isLocked = rank.id <= currentRankId;
+          
+          return (
+            <Card
+              key={rank.id}
+              onClick={() => handleRankSelect(rank)}
+              className={`p-6 transition-all ${
+                isLocked 
+                  ? "opacity-50 cursor-not-allowed bg-secondary/20" 
+                  : "cursor-pointer hover:border-primary/50"
+              } ${selectedRank?.id === rank.id ? "border-primary shadow-glow scale-105" : ""}`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-1">
+                  {Array.from({ length: rank.stars }).map((_, i) => (
+                    <Star key={i} className={`h-4 w-4 ${isLocked ? "text-muted-foreground" : "text-primary fill-primary"}`} />
+                  ))}
+                </div>
+                {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
               </div>
-            </div>
-            <h3 className="text-lg font-bold">{rank.name}</h3>
-            <p className="text-2xl font-extrabold mt-2 text-primary">Ksh {rank.tier_value.toLocaleString()}</p>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_follow_tasks} Follows / day</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_like_tasks} Likes / day</li>
-            </ul>
-          </Card>
-        ))}
+              <h3 className="text-lg font-bold">{rank.name}</h3>
+              <p className="text-2xl font-extrabold mt-2 text-primary">Ksh {rank.tier_value.toLocaleString()}</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_follow_tasks} Follows / day</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_like_tasks} Likes / day</li>
+              </ul>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Payment Form (scrolls into view when rank is clicked) */}
       {selectedRank && (
         <div ref={paymentRef} className="glass rounded-xl p-6 space-y-6">
           <div>
             <h2 className="text-xl font-bold">Pay for {selectedRank.name}</h2>
-            <p className="text-sm text-muted-foreground">Complete the M-Pesa payment to unlock your account.</p>
+            <p className="text-sm text-muted-foreground">Complete the M-Pesa payment to upgrade your account.</p>
           </div>
 
           <div className="bg-secondary/50 p-4 rounded-lg text-sm">
@@ -116,10 +135,9 @@ export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], p
                 maxLength={10}
                 required
               />
-              <p className="text-xs text-muted-foreground">Enter the 10-character code from your M-Pesa SMS.</p>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Submitting..." : "Submit for Approval"}
+              {isLoading ? "Submitting..." : "Submit Upgrade Request"}
             </Button>
           </form>
         </div>
