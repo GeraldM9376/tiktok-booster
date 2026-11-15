@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Star, CheckCircle2, Lock } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,6 @@ export function RankUpgradeClient({
   const paymentRef = useRef<HTMLDivElement>(null);
 
   function handleRankSelect(rank: any) {
-    // Prevent selecting a rank that is lower or equal to current
     if (rank.id <= currentRankId) {
       toast.error("You already have this rank or higher.");
       return;
@@ -57,7 +57,6 @@ export function RankUpgradeClient({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // The RPC function will now overwrite the existing rank due to ON CONFLICT
     const { error } = await supabase.rpc("request_rank_upgrade", {
       p_user_id: user.id,
       p_rank_id: selectedRank.id,
@@ -77,33 +76,59 @@ export function RankUpgradeClient({
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ranks.map((rank) => {
-          const isLocked = rank.id <= currentRankId;
+          const isCurrent = rank.id === currentRankId;
+          const isLocked = rank.id < currentRankId;
+          const isSelectable = rank.id > currentRankId;
           
           return (
-            <Card
+            <motion.div
               key={rank.id}
-              onClick={() => handleRankSelect(rank)}
-              className={`p-6 transition-all ${
-                isLocked 
-                  ? "opacity-50 cursor-not-allowed bg-secondary/20" 
-                  : "cursor-pointer hover:border-primary/50"
-              } ${selectedRank?.id === rank.id ? "border-primary shadow-glow scale-105" : ""}`}
+              whileHover={isSelectable ? { scale: 1.02 } : {}}
+              whileTap={isSelectable ? { scale: 0.98 } : {}}
+              animate={{ 
+                scale: selectedRank?.id === rank.id ? 1.05 : 1,
+                transition: { type: "spring", stiffness: 300, damping: 20 }
+              }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex gap-1">
-                  {Array.from({ length: rank.stars }).map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${isLocked ? "text-muted-foreground" : "text-primary fill-primary"}`} />
-                  ))}
+              <Card
+                onClick={() => handleRankSelect(rank)}
+                className={`p-6 h-full transition-all duration-300 ${
+                  isCurrent 
+                    ? "border-primary shadow-glow bg-primary/5" 
+                    : isLocked 
+                      ? "opacity-50 cursor-not-allowed bg-secondary/20" 
+                      : selectedRank?.id === rank.id 
+                        ? "border-primary shadow-glow bg-primary/10" 
+                        : "cursor-pointer hover:border-primary/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex gap-1">
+                    {Array.from({ length: rank.stars }).map((_, i) => (
+                      <Star key={i} className={`h-4 w-4 ${isLocked ? "text-muted-foreground" : "text-primary fill-primary"}`} />
+                    ))}
+                  </div>
+                  {isCurrent && (
+                    <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded">
+                      CURRENT
+                    </span>
+                  )}
+                  {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
                 </div>
-                {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-              </div>
-              <h3 className="text-lg font-bold">{rank.name}</h3>
-              <p className="text-2xl font-extrabold mt-2 text-primary">Ksh {rank.tier_value.toLocaleString()}</p>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_follow_tasks} Follows / day</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> {rank.daily_like_tasks} Likes / day</li>
-              </ul>
-            </Card>
+                <h3 className="text-lg font-bold">{rank.name}</h3>
+                <p className="text-2xl font-extrabold mt-2 text-primary">Ksh {rank.tier_value.toLocaleString()}</p>
+                <ul className="mt-4 space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className={`h-4 w-4 ${isLocked ? "text-muted-foreground" : "text-green-500"}`} /> 
+                    {rank.daily_follow_tasks} Follows / day
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className={`h-4 w-4 ${isLocked ? "text-muted-foreground" : "text-green-500"}`} /> 
+                    {rank.daily_like_tasks} Likes / day
+                  </li>
+                </ul>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
