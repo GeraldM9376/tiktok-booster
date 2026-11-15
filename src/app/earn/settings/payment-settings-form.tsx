@@ -35,17 +35,17 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       ? { method: "mpesa", mpesa_number: mpesaNumber }
       : { method: "bank", bank_name: bankName, account_number: accountNumber };
 
-    const { error } = await supabase
-      .from("earner_profiles")
-      .update({ payment_details: paymentDetails })
-      .eq("user_id", user.id);
+    // Call the secure RPC function
+    const { error } = await supabase.rpc("update_payment_details", {
+      details: paymentDetails,
+    });
 
     if (error) {
       toast.error(error.message);
       setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
-      // Force a hard navigation to earnings page, bypassing cache
+      // Force a hard reload to bypass any caching
       window.location.href = "/earn/earnings";
     }
   }
