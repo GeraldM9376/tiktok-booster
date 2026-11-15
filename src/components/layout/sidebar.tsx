@@ -24,6 +24,7 @@ import {
   UserCog,
   Receipt,
   LogOut,
+  X,
 } from "lucide-react";
 
 import { site } from "@/config/site";
@@ -54,9 +55,11 @@ const ICONS: Record<string, React.ElementType> = {
 
 interface SidebarProps {
   type: SidebarType;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ type }: SidebarProps) {
+export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
@@ -67,36 +70,35 @@ export function Sidebar({ type }: SidebarProps) {
         ? site.nav.creator
         : site.nav.admin;
 
-  // Define bottom links explicitly based on the role
   const bottomLinks = [
     { label: "Help Centre", href: `/${type}/help`, icon: HelpCircle },
     { label: "Settings", href: `/${type}/settings`, icon: Settings },
   ];
 
-  // Admin doesn't have a help page in this build, so we override it
   if (type === "admin") {
     bottomLinks[0] = { label: "System Settings", href: "/admin/settings", icon: Settings };
   }
 
-  return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 72 : 256 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="sticky top-0 hidden h-dvh flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground md:flex"
-    >
+  const sidebarContent = (
+    <>
       <div className="flex h-16 items-center justify-between px-4">
-        {!collapsed && (
-          <Link href="/" className="text-lg font-bold tracking-tight">
+        {(!collapsed || isOpen) && (
+          <Link href="/" className="text-lg font-bold tracking-tight" onClick={onClose}>
             <span className="text-gradient">{site.name}</span>
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-md p-1.5 hover:bg-sidebar-accent"
+          className="hidden md:block rounded-md p-1.5 hover:bg-sidebar-accent"
           aria-label="Toggle sidebar"
         >
           {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={onClose}
+          className="md:hidden rounded-md p-1.5 hover:bg-sidebar-accent"
+        >
+          <X className="h-5 w-5" />
         </button>
       </div>
 
@@ -109,26 +111,16 @@ export function Sidebar({ type }: SidebarProps) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={cn(
                     "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     active
                       ? "bg-sidebar-primary text-sidebar-primary-foreground"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   )}
-                  title={collapsed ? item.label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <AnimatePresence initial={false}>
-                    {!collapsed && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  <span>{item.label}</span>
                 </Link>
               </li>
             );
@@ -145,16 +137,16 @@ export function Sidebar({ type }: SidebarProps) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     active
                       ? "bg-sidebar-accent text-sidebar-foreground"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   )}
-                  title={collapsed ? item.label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
+                  <span>{item.label}</span>
                 </Link>
               </li>
             );
@@ -165,15 +157,52 @@ export function Sidebar({ type }: SidebarProps) {
               <button
                 type="submit"
                 className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                title={collapsed ? "Log Out" : undefined}
               >
                 <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>Log Out</span>}
+                <span>Log Out</span>
               </button>
             </form>
           </li>
         </ul>
       </div>
-    </motion.aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 72 : 256 }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className="sticky top-0 hidden h-dvh flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground md:flex"
+      >
+        {sidebarContent}
+      </motion.aside>
+
+      {/* Mobile Sidebar (Overlay) */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground md:hidden"
+            >
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

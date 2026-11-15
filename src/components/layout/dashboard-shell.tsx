@@ -1,10 +1,9 @@
 // src/components/layout/dashboard-shell.tsx
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { Topbar } from "@/components/layout/topbar";
-import { Sidebar } from "@/components/layout/sidebar";
 import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { DashboardLayoutClient } from "./dashboard-layout-client";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -12,7 +11,6 @@ interface DashboardShellProps {
   authPath: string;
 }
 
-// 1. Inner component that fetches the data
 async function DashboardShellContent({ children, type, authPath }: DashboardShellProps) {
   const supabase = await createClient();
   const {
@@ -23,7 +21,6 @@ async function DashboardShellContent({ children, type, authPath }: DashboardShel
     redirect(authPath);
   }
 
-  // Fetch the profile + wallet
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name, avatar_url")
@@ -37,22 +34,18 @@ async function DashboardShellContent({ children, type, authPath }: DashboardShel
     .single();
 
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar type={type} />
-      <div className="flex flex-1 flex-col">
-        <Topbar
-          userEmail={user.email ?? ""}
-          displayName={profile?.display_name ?? null}
-          avatarUrl={profile?.avatar_url ?? null}
-          walletBalance={wallet?.available_balance}
-        />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-      </div>
-    </div>
+    <DashboardLayoutClient
+      type={type}
+      userEmail={user.email ?? ""}
+      displayName={profile?.display_name ?? null}
+      avatarUrl={profile?.avatar_url ?? null}
+      walletBalance={wallet?.available_balance}
+    >
+      {children}
+    </DashboardLayoutClient>
   );
 }
 
-// 2. The exported shell wraps the content in Suspense
 export function DashboardShell(props: DashboardShellProps) {
   return (
     <Suspense fallback={

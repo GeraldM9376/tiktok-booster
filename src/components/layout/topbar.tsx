@@ -2,7 +2,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Bell, Moon, Sun, LogOut, User, Wallet } from "lucide-react";
+import { Bell, Moon, Sun, LogOut, User, Wallet, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -23,9 +23,10 @@ interface TopbarProps {
   displayName: string | null;
   avatarUrl: string | null;
   walletBalance?: number;
+  onMenuClick?: () => void;
 }
 
-export function Topbar({ userEmail, displayName, avatarUrl, walletBalance }: TopbarProps) {
+export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMenuClick }: TopbarProps) {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
 
@@ -33,6 +34,12 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance }: Top
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/60 bg-background/80 backdrop-blur px-4 md:px-6">
+      
+      {/* Mobile Menu Button */}
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+        <Menu className="h-5 w-5" />
+      </Button>
+
       <div className="flex-1" />
 
       {typeof walletBalance === "number" && (
@@ -77,7 +84,7 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance }: Top
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <form action={signOut}>
+            <form action={signOut} className="w-full">
               <button type="submit" className="flex w-full items-center">
                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
               </button>
