@@ -23,10 +23,12 @@ import {
   ShieldCheck,
   UserCog,
   Receipt,
+  LogOut,
 } from "lucide-react";
 
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/lib/auth/actions";
 
 type SidebarType = "earner" | "creator" | "admin";
 
@@ -124,6 +126,7 @@ export function Sidebar({ type }: SidebarProps) {
         </ul>
       </nav>
 
+      {/* Bottom Section: Help, Settings, Logout */}
       <div className="border-t border-sidebar-border p-2">
         <ul className="space-y-1">
           {[
@@ -131,11 +134,17 @@ export function Sidebar({ type }: SidebarProps) {
             { label: "Settings", href: `/${type}/settings`, icon: Settings },
           ].map((item) => {
             const Icon = item.icon;
+            const active = pathname === item.href;
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-sidebar-accent text-sidebar-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -144,6 +153,20 @@ export function Sidebar({ type }: SidebarProps) {
               </li>
             );
           })}
+          
+          {/* Logout Button */}
+          <li>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                title={collapsed ? "Log Out" : undefined}
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Log Out</span>}
+              </button>
+            </form>
+          </li>
         </ul>
       </div>
     </motion.aside>
