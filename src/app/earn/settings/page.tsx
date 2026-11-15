@@ -13,14 +13,12 @@ async function SettingsContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  // Use maybeSingle() to prevent crashes if the profile doesn't exist yet
   const { data: profile } = await supabase
     .from("earner_profiles")
     .select("payment_details")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Safe extraction
   const paymentDetails = profile?.payment_details || null;
   const hasDetails = !!paymentDetails;
 

@@ -1,4 +1,7 @@
 // src/app/earn/tasks/daily/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +25,8 @@ async function DailyTasksContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  const today = new Date().toISOString().split("T")[0];
+  // Use local time for "today" to match the user's midnight
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
 
   // 1. Get rank limit
   const { data: rankData } = await supabase
@@ -35,14 +39,14 @@ async function DailyTasksContent() {
   const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
   const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
 
-  // 2. Fetch a pool of creators (We will NOT filter out completed ones here)
+  // 2. Fetch a pool of creators
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
     .order("follower_count", { ascending: false })
-    .limit(followLimit); 
+    .limit(50); 
 
-  // 3. Get the completed IDs to check status on the client
+  // 3. Get the completed IDs for TODAY only
   const { data: completed } = await supabase
     .from("completed_tasks")
     .select("target_id")
@@ -95,7 +99,6 @@ async function DailyTasksContent() {
                     <p className="text-xs font-medium mt-1 text-primary">{getNicheName(creator.niches)}</p>
                   </div>
                   <div className="w-full pt-4 border-t">
-                    {/* Pass the task button with the daily page flag */}
                     <TaskButton targetId={creator.id} type="follow" isOnDailyTaskPage={true} />
                   </div>
                 </CardContent>
