@@ -21,14 +21,14 @@ export default async function MarketplacePage({
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Fetch 60 creators, ordered by ID (to mix them up) instead of follower count
+  // Fetch creators ordered by a random seed so we get mixed niches on every page
   const { data: creators, count } = await supabase
     .from("creators")
     .select("id, username, avatar_url, follower_count, engagement_rate, verified, niche_id", { count: "exact" })
-    .order("id", { ascending: true }) // This mixes niches together
+    .order("engagement_rate", { ascending: false }) // Sorts by engagement (more varied than ID)
+    .order("id", { ascending: true })
     .range(from, to);
 
-  // Fetch all niches to map them
   const { data: niches } = await supabase.from("niches").select("id, name");
   const nicheMap = new Map(niches?.map(n => [n.id, n.name]) || []);
 
@@ -44,12 +44,8 @@ export default async function MarketplacePage({
           </p>
         </div>
 
-        <MarketplaceGrid 
-          creators={creators || []} 
-          nicheMap={nicheMap} 
-        />
+        <MarketplaceGrid creators={creators || []} nicheMap={nicheMap} />
 
-        {/* Pagination Controls - Removed the "Showing X of Y" text */}
         {totalPages > 1 && (
           <div className="flex items-center justify-end pt-6 border-t border-border/50">
             <div className="flex gap-2">
