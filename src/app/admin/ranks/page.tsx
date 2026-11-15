@@ -12,7 +12,7 @@ async function RanksContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  // Fetch rank requests with explicit disambiguation
+  // Fetch rank requests
   const { data: requests, error } = await supabase
     .from("user_ranks")
     .select(`
@@ -27,6 +27,21 @@ async function RanksContent() {
   if (error) {
     return <div className="p-8 text-red-500">Error loading requests: {error.message}</div>;
   }
+
+  // Fetch audit logs to get the M-Pesa codes
+  const { data: logs } = await supabase
+    .from("audit_logs")
+    .select("target_id, metadata, actor_id")
+    .eq("action", "rank_upgrade_requested");
+
+  // Create a lookup map for the codes
+  const mpesaCodes = new Map();
+  logs?.forEach(log => {
+    // target_id is the rank_id, we use actor_id to match the user
+    if (log.actor_id && log.metadata?.mpesa_code) {
+      mpesaCodes.set(log.actor_id, log.metadata.mpesa_code);
+    }
+  });
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -44,6 +59,7 @@ async function RanksContent() {
                 <th className="px-4 py-3 font-medium">User</th>
                 <th className="px-4 py-3 font-medium">Rank</th>
                 <th className="px-4 py-3 font-medium">Price</th>
+                <th className="px-4 py-3 font-medium">M-Pesa Code</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
@@ -59,6 +75,9 @@ async function RanksContent() {
                     {(req.rank_packages as any)?.name || "-"}
                   </td>
                   <td className="px-4 py-3">Ksh {(req.rank_packages as any)?.tier_value?.toLocaleString() || 0}</td>
+                  <td className="px-4 py-3 font-mono text-xs">
+                    {mpesaCodes.get(req.user_id) || "N/A"}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant={req.status === "approved" ? "default" : req.status === "rejected" ? "destructive" : "secondary"}>
                       {req.status}
@@ -75,7 +94,7 @@ async function RanksContent() {
               ))}
               {(!requests || requests.length === 0) && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     No rank requests found.
                   </td>
                 </tr>
