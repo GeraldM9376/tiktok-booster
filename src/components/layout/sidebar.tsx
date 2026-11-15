@@ -39,7 +39,6 @@ const ICONS: Record<string, React.ElementType> = {
   "/earn/earnings": Wallet,
   "/earn/rank": Trophy,
   "/earn/referral": Gift,
-  "/earn/creator": Users,
   "/creator/dashboard": LayoutDashboard,
   "/creator/videos": Video,
   "/creator/campaigns": Megaphone,
@@ -67,6 +66,17 @@ export function Sidebar({ type }: SidebarProps) {
       : type === "creator"
         ? site.nav.creator
         : site.nav.admin;
+
+  // Define bottom links explicitly based on the role
+  const bottomLinks = [
+    { label: "Help Centre", href: `/${type}/help`, icon: HelpCircle },
+    { label: "Settings", href: `/${type}/settings`, icon: Settings },
+  ];
+
+  // Admin doesn't have a help page in this build, so we override it
+  if (type === "admin") {
+    bottomLinks[0] = { label: "System Settings", href: "/admin/settings", icon: Settings };
+  }
 
   return (
     <motion.aside
@@ -126,13 +136,9 @@ export function Sidebar({ type }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* Bottom Section: Help, Settings, Logout */}
       <div className="border-t border-sidebar-border p-2">
         <ul className="space-y-1">
-          {[
-            { label: "Help Centre", href: `/${type}/help`, icon: HelpCircle },
-            { label: "Settings", href: `/${type}/settings`, icon: Settings },
-          ].map((item) => {
+          {bottomLinks.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
             return (
@@ -154,7 +160,6 @@ export function Sidebar({ type }: SidebarProps) {
             );
           })}
           
-          {/* Logout Button */}
           <li>
             <form action={signOut}>
               <button
