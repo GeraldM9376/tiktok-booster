@@ -14,7 +14,6 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  // Fetch all profiles with safe disambiguation for relationships
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
@@ -26,7 +25,7 @@ async function UsersContent() {
       user_roles (roles (name)),
       earner_profiles!user_id (approved),
       creator_profiles!user_id (approved),
-      user_ranks!user_id (status, rank_packages (name))
+      user_ranks!user_id (status, rank_packages (name), purchased_at)
     `)
     .order("created_at", { ascending: false });
 
@@ -61,10 +60,14 @@ async function UsersContent() {
                 const role = (profile.user_roles as any)?.[0]?.roles?.name || "earner";
                 const balance = (profile.wallets as any)?.[0]?.available_balance || 0;
                 
-                // Safely extract rank info
-                const userRank = (profile.user_ranks as any)?.[0];
-                const rankName = userRank?.rank_packages?.name || "Unranked";
-                const rankStatus = userRank?.status || "none";
+                // Extract the most recent rank based on purchased_at
+                const ranks = (profile.user_ranks as any) || [];
+                const latestRank = ranks.length > 0 
+                  ? ranks.sort((a: any, b: any) => new Date(b.purchased_at).getTime() - new Date(a.purchased_at).getTime())[0]
+                  : null;
+                
+                const rankName = latestRank?.rank_packages?.name || "Unranked";
+                const rankStatus = latestRank?.status || "none";
 
                 return (
                   <tr key={profile.id} className="hover:bg-secondary/20">

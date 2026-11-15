@@ -22,7 +22,6 @@ async function RankContent() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Fetch payment settings
   const { data: settings } = await supabase
     .from("platform_settings")
     .select("key, value")
