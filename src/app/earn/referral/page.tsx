@@ -13,24 +13,36 @@ async function ReferralContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  let { data: refData } = await supabase
+  // 1. Try to get the existing code
+  const { data: existingCode } = await supabase
     .from("referral_codes")
     .select("code")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!refData) {
-    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const { data: inserted } = await supabase
+  let finalCode = existingCode?.code;
+
+  // 2. If no code exists, generate one and insert it
+  if (!finalCode) {
+    const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const { data: insertedCode, error } = await supabase
       .from("referral_codes")
-      .insert({ user_id: user.id, code: newCode })
+      .insert({ user_id: user.id, code: generatedCode })
       .select("code")
       .single();
-    refData = inserted;
+      
+    if (error) {
+      return <div className="p-8 text-red-500">Error generating code: {error.message}</div>;
+    }
+    
+    finalCode = insertedCode.code;
   }
 
-  const referralLink = `${site.url}/earn/auth?ref=${refData?.code}`;
+  // 3. Construct the link properly
+  const referralLink = `${site.url}/earn/auth?ref=${finalCode}`;
 
+  // 4. Get referrals
   const { data: referrals } = await supabase
     .from("referrals")
     .select("*, profiles:referred_id(email, display_name)")
@@ -52,12 +64,17 @@ async function ReferralContent() {
       <div className="glass rounded-xl p-6 flex flex-col md:flex-row items-center gap-6">
         <div className="flex-1">
           <p className="text-sm text-muted-foreground mb-1">Your Referral Code</p>
-          <p className="text-2xl font-mono font-bold tracking-widest">{refData?.code}</p>
+          <p className="text-2xl font-mono font-bold tracking-widest">{finalCode}</p>
         </div>
         <div className="flex-1 w-full">
           <p className="text-sm text-muted-foreground mb-1">Your Invite Link</p>
           <div className="flex gap-2">
-            <input type="text" readOnly value={referralLink} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground" />
+            <input 
+              type="text" 
+              readOnly 
+              value={referralLink} 
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground" 
+            />
             <CopyButton text={referralLink} />
           </div>
         </div>
@@ -94,11 +111,17 @@ async function ReferralContent() {
                 <tr key={ref.id}>
                   <td className="px-4 py-3">{(ref.profiles as any)?.display_name || (ref.profiles as any)?.email || "Anonymous"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{new Date(ref.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right"><Badge variant={ref.status === "approved" ? "default" : "secondary"}>{ref.status}</Badge></td>
+                  <td className="px-4 py-3 text-right">
+                    <Badge variant={ref.status === "approved" ? "default" : "secondary"}>{ref.status}</Badge>
+                  </td>
                 </tr>
               ))}
               {(!referrals || referrals.length === 0) && (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">No referrals yet. Share your link to get started!</td></tr>
+                <tr>
+                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                    No referrals yet. Share your link to get started!
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
