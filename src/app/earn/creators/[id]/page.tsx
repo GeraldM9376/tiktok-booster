@@ -28,10 +28,13 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   if (!creator) notFound();
 
   // Fetch ALL videos for this creator
-  const { data: videos, count: videoCount } = await supabase
+  const { data: videos } = await supabase
     .from("videos")
-    .select("*", { count: "exact" })
+    .select("*")
     .eq("creator_id", id);
+
+  // This is the EXACT number of videos
+  const actualVideoCount = videos ? videos.length : 0;
 
   const safeId = creator.id || id;
   const safeUsername = creator.username ? String(creator.username) : null;
@@ -60,8 +63,8 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
             <div><p className="text-2xl font-bold">{creator.follower_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Followers</p></div>
             <div><p className="text-2xl font-bold">{creator.following_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Following</p></div>
-            {/* Show the real count of videos */}
-            <div><p className="text-2xl font-bold">{videoCount || 0}</p><p className="text-xs text-muted-foreground uppercase">Videos</p></div>
+            {/* Displays the exact number of videos */}
+            <div><p className="text-2xl font-bold">{actualVideoCount}</p><p className="text-xs text-muted-foreground uppercase">Videos</p></div>
             <div><p className="text-2xl font-bold">{creator.engagement_rate}%</p><p className="text-xs text-muted-foreground uppercase">Engagement</p></div>
           </div>
           <div className="mt-4">
@@ -76,28 +79,24 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
       {/* Videos List */}
       <div>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          Videos <Badge variant="secondary">{videoCount}</Badge>
+          Videos <Badge variant="secondary">{actualVideoCount}</Badge>
         </h2>
         
         <div className="glass rounded-xl overflow-hidden">
-          <div className="divide-y divide-border max-h-[800px] overflow-y-auto"> {/* Added scroll for many videos */}
+          <div className="divide-y divide-border max-h-[800px] overflow-y-auto">
             {videos?.map((video) => {
               const cleanTitle = stripEmojis(video.title);
-              // Generate a unique fake URL based on the video ID
+              // Generate unique fake URL
               const fakeUrl = `tiktok.com/@user/video/${video.id.slice(0, 8)}...`;
               
               return (
                 <div key={video.id} className="p-4 flex items-center justify-between gap-4 hover:bg-secondary/50 transition-colors">
-                  
-                  {/* Video Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{cleanTitle}</p>
                     <p className="text-xs text-muted-foreground truncate font-mono mt-1">
                       {fakeUrl}
                     </p>
                   </div>
-
-                  {/* Stats */}
                   <div className="flex items-center gap-6 text-sm text-muted-foreground whitespace-nowrap">
                     <div className="text-right">
                       <p className="font-semibold text-foreground">{video.view_count.toLocaleString()}</p>
@@ -107,8 +106,6 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
                       <p className="font-semibold text-foreground">{video.like_count.toLocaleString()}</p>
                       <p className="text-[10px] uppercase">Likes</p>
                     </div>
-                    
-                    {/* Heart Button */}
                     <div className="pl-4 border-l border-border">
                       <TaskButton targetId={video.id} type="like" />
                     </div>
