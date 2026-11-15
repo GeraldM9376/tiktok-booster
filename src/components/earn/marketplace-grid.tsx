@@ -6,21 +6,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getRealName, getRealUsername, resolveAvatar } from "@/lib/utils";
 
-export function MarketplaceGrid({ creators, niches }: { creators: any[], niches: any[] }) {
-  const nicheMap = new Map(niches.map(n => [n.id, n.name]));
-
+export function MarketplaceGrid({ 
+  creators, 
+  nicheMap, 
+  startIndex 
+}: { 
+  creators: any[], 
+  nicheMap: Map<number, string>, 
+  startIndex: number 
+}) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {creators.map((creator) => {
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {creators.map((creator, index) => {
         const safeId = creator.id || "unknown";
         const name = getRealName(safeId);
         const username = getRealUsername(safeId, creator.username);
         const nicheName = nicheMap.get(creator.niche_id) || "Uncategorized";
         
+        // Calculate the global number (1 to 10,000)
+        const globalNumber = startIndex + index;
+
         return (
           <Link key={safeId} href={`/earn/creators/${safeId}`}>
-            <div className="glass rounded-xl p-4 transition-all hover:scale-[1.02] hover:shadow-glow cursor-pointer flex flex-col h-full">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="glass rounded-xl p-4 transition-all hover:scale-[1.02] hover:shadow-glow cursor-pointer flex flex-col h-full relative">
+              
+              {/* Rank Number Badge */}
+              <div className="absolute top-3 right-3 bg-secondary/80 text-xs font-bold px-2 py-1 rounded-md text-muted-foreground">
+                #{globalNumber}
+              </div>
+
+              <div className="flex items-center gap-3 mb-4 mt-2">
                 <Avatar className="h-12 w-12 border border-border">
                   <AvatarImage src={resolveAvatar(creator.avatar_url, safeId)} />
                   <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
