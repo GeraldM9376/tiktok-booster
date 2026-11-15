@@ -10,6 +10,12 @@ import { TaskButton } from "../../creators/[id]/task-button";
 import { Loader2 } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
+function getNicheName(niches: any): string {
+  if (!niches) return "Uncategorized";
+  if (Array.isArray(niches)) return niches[0]?.name || "Uncategorized";
+  return niches.name || "Uncategorized";
+}
+
 async function DailyTasksContent() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,11 +30,15 @@ async function DailyTasksContent() {
 
   const completedIds = completed?.map(c => c.target_id) || [];
 
-  const { data: creators } = await supabase
+  const { data: creators, error } = await supabase
     .from("creators")
     .select("*, niches(name)")
     .order("created_at", { ascending: false })
     .limit(10);
+
+  if (error) {
+    return <div className="p-8 text-center text-red-500">Error loading tasks: {error.message}</div>;
+  }
 
   const tasks = creators?.filter(c => !completedIds.includes(c.id)).slice(0, 5) || [];
 
@@ -37,38 +47,43 @@ async function DailyTasksContent() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Daily Tasks</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Complete these tasks to earn extra credits today. Resets at midnight.
+          Complete these tasks to earn extra credits today.
         </p>
       </div>
 
       {tasks.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {tasks.map((creator) => (
-            <Card key={creator.id} className="glass overflow-hidden">
-              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
-                  <AvatarFallback>{getRealName(creator.id).slice(0, 2)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <Link href={`/earn/creators/${creator.id}`} className="font-bold hover:underline">
-                    {getRealName(creator.id)}
-                  </Link>
-                  <p className="text-xs text-muted-foreground">@{getRealUsername(creator.id, creator.username)}</p>
-                  <p className="text-xs font-medium mt-1 text-primary">{(creator.niches as any)?.name}</p>
-                </div>
-                <div className="w-full pt-4 border-t">
-                  <TaskButton targetId={creator.id} type="follow" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {tasks.map((creator) => {
+            const realName = getRealName(creator.id);
+            const realUser = getRealUsername(creator.id, creator.username);
+            
+            return (
+              <Card key={creator.id} className="glass overflow-hidden">
+                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
+                    <AvatarFallback>{realName.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Link href={`/earn/creators/${creator.id}`} className="font-bold hover:underline">
+                      {realName}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">@{realUser}</p>
+                    <p className="text-xs font-medium mt-1 text-primary">{getNicheName(creator.niches)}</p>
+                  </div>
+                  <div className="w-full pt-4 border-t">
+                    <TaskButton targetId={creator.id} type="follow" />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="glass rounded-xl p-12 text-center">
           <h2 className="text-xl font-bold mb-2">All caught up! 🎉</h2>
           <p className="text-muted-foreground">You've completed all your daily tasks. Come back tomorrow!</p>
-          <Link href="/earn/marketplace" className="inline-block mt-4 text-primary hover:underline font-medium">Browse the Marketplace for more</Link>
+          <Link href="/earn/marketplace" className="inline-block mt-4 text-primary hover:underline font-medium">Browse the Marketplace</Link>
         </div>
       )}
     </div>

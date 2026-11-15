@@ -23,7 +23,12 @@ async function MarketplaceContent({ searchParams }: { searchParams: Promise<{ pa
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const { data: creators, count } = await query.order("follower_count", { ascending: false }).range(from, to);
+  const { data: creators, count, error } = await query.order("follower_count", { ascending: false }).range(from, to);
+  
+  if (error) {
+    return <div className="p-8 text-center text-red-500">Error loading creators: {error.message}</div>;
+  }
+
   const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
   const { data: niches } = await supabase.from("niches").select("*").order("name");
 
