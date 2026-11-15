@@ -3,20 +3,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, UserPlus, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
 export function TaskButton({ targetId, type }: { targetId: string; type: "follow" | "like" }) {
-  const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
 
-  // Check if task is already completed on mount
+  // Check if task is already completed today
   useEffect(() => {
     async function checkStatus() {
       const supabase = createClient();
@@ -38,35 +35,11 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
     checkStatus();
   }, [targetId, type]);
 
-  async function handleTask() {
-    if (completed || isLoading) return;
-    setIsLoading(true);
-
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("You must be logged in.");
-      setIsLoading(false);
-      return;
-    }
-
-    const reward = type === "follow" ? 10 : 1;
-    const result = await completeTask(user.id, type, targetId, reward);
-
-    if (result.error) {
-      toast.error(result.error);
-      if (result.error.includes("active rank")) {
-        router.push("/earn/rank");
-      }
-    } else {
-      setCompleted(true);
-      toast.success(`Thank you! +${reward} credits added to your wallet.`);
-      router.refresh();
-    }
-    setIsLoading(false);
+  function handleRedirect() {
+    // Redirect to the daily tasks page to actually earn the points
+    router.push("/earn/tasks/daily");
   }
 
-  // Render Follow Button with Earn More
   if (type === "follow") {
     if (completed) {
       return (
@@ -78,9 +51,9 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
             <Check className="mr-2 h-4 w-4" /> Followed
           </Button>
           <Button asChild variant="default" className="shadow-glow">
-            <Link href={`/earn/creators/${targetId}`}>
+            <a href={`/earn/tasks/daily`}>
               Earn More <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            </a>
           </Button>
         </div>
       );
@@ -88,17 +61,10 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
 
     return (
       <Button
-        onClick={handleTask}
-        disabled={isLoading}
+        onClick={handleRedirect}
         className="w-full shadow-glow"
       >
-        {isLoading ? (
-          "Processing..."
-        ) : (
-          <>
-            <UserPlus className="mr-2 h-4 w-4" /> Follow (+10)
-          </>
-        )}
+        <UserPlus className="mr-2 h-4 w-4" /> Follow (+10)
       </Button>
     );
   }
@@ -107,8 +73,8 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
   return (
     <motion.button
       whileTap={{ scale: 0.8 }}
-      onClick={handleTask}
-      disabled={isLoading || completed}
+      onClick={handleRedirect}
+      disabled={completed}
       className={`p-2 rounded-full transition-colors ${
         completed 
           ? "text-red-500 bg-red-500/10" 
