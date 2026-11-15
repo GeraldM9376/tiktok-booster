@@ -24,25 +24,34 @@ function hashString(str: string): number {
 }
 
 export function getRealName(seed: string): string {
-  const safeSeed = seed || "unknown";
-  const hash = hashString(safeSeed);
-  const firstName = FIRST_NAMES[hash % FIRST_NAMES.length];
-  const lastName = LAST_NAMES[(hash >> 4) % LAST_NAMES.length];
+  if (!seed) return "Creator";
+  const hash = hashString(seed);
+  
+  // Use modulo to ensure the index is always within bounds
+  const firstIndex = hash % FIRST_NAMES.length;
+  const lastIndex = (hash >> 4) % LAST_NAMES.length;
+  
+  const firstName = FIRST_NAMES[firstIndex] || "Alex";
+  const lastName = LAST_NAMES[lastIndex] || "Smith";
+  
   return `${firstName} ${lastName}`;
 }
 
 export function getRealUsername(seed: string, fallback: any): string {
-  // Catch every possible way fallback could be empty
-  if (typeof fallback !== "string" || !fallback) {
-    const safeSeed = seed || "unknown";
-    const hash = hashString(safeSeed);
-    const firstName = FIRST_NAMES[hash % FIRST_NAMES.length].toLowerCase();
-    const lastName = LAST_NAMES[(hash >> 4) % LAST_NAMES.length].toLowerCase();
-    return `${firstName}_${lastName}`;
+  if (typeof fallback === "string" && fallback.length > 0) {
+    return fallback.toLowerCase();
   }
   
-  // It is a valid string, so toLowerCase is safe
-  return fallback.toLowerCase();
+  const safeSeed = seed || "unknown";
+  const hash = hashString(safeSeed);
+  
+  const firstIndex = hash % FIRST_NAMES.length;
+  const lastIndex = (hash >> 4) % LAST_NAMES.length;
+  
+  const firstName = (FIRST_NAMES[firstIndex] || "alex").toLowerCase();
+  const lastName = (LAST_NAMES[lastIndex] || "smith").toLowerCase();
+  
+  return `${firstName}_${lastName}`;
 }
 
 export function getHumanAvatar(seed: string, gender?: "men" | "women"): string {
