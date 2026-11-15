@@ -36,6 +36,7 @@ export const site = {
     admin: [
       { label: "Overview", href: "/admin/dashboard" },
       { label: "Users", href: "/admin/users" },
+      { label: "Rank Approvals", href: "/admin/ranks" }, // <-- Add this line
       { label: "Top-Ups", href: "/admin/topups" },
       { label: "Withdrawals", href: "/admin/withdrawals" },
       { label: "Audit", href: "/admin/audit" },

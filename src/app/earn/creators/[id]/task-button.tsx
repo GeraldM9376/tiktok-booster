@@ -1,7 +1,8 @@
 // src/app/earn/creators/[id]/task-button.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Heart, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -12,19 +13,41 @@ import { createClient } from "@/lib/supabase/client";
 export function TaskButton({ targetId, type }: { targetId: string; type: "follow" | "like" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [hasRank, setHasRank] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  // Check if the user has an approved rank on mount
+  useEffect(() => {
+    async function checkRank() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("user_ranks")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .maybeSingle();
+        
+      setHasRank(!!data);
+    }
+    checkRank();
+  }, []);
 
   async function handleTask() {
+    if (hasRank === false) {
+      toast.error("You need an active rank to earn credits. Please purchase one.");
+      router.push("/earn/rank");
+      return;
+    }
+
     if (completed || isLoading) return;
     setIsLoading(true);
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      toast.error("You must be logged in.");
-      setIsLoading(false);
-      return;
-    }
+    if (!user) return;
 
     const reward = type === "follow" ? 10 : 2;
     const result = await completeTask(user.id, type, targetId, reward);
@@ -55,7 +78,6 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
     );
   }
 
-  // Like button (Heart)
   return (
     <motion.button
       whileTap={{ scale: 0.8 }}

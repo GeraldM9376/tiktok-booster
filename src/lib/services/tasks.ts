@@ -13,7 +13,35 @@ export async function completeTask(
   const supabase = await createClient();
   const today = new Date().toISOString().split("T")[0];
 
-  // 1. Check if already completed today
+  // 1. Check if user has an active rank
+  const { data: rankData } = await supabase
+    .from("user_ranks")
+    .select("rank_packages(daily_follow_tasks, daily_like_tasks)")
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (!rankData || !rankData.rank_packages) {
+    return { error: "You need an active rank to earn credits." };
+  }
+
+  const limit = taskType === "follow" 
+    ? (rankData.rank_packages as any).daily_follow_tasks 
+    : (rankData.rank_packages as any).daily_like_tasks;
+
+  // 2. Count how many tasks of this type they've done today
+  const { count: completedToday } = await supabase
+    .from("completed_tasks")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("task_type", taskType)
+    .eq("day_bucket", today);
+
+  if (completedToday && completedToday >= limit) {
+    return { error: `You have reached your daily limit of ${limit} ${taskType}s. Upgrade your rank for more.` };
+  }
+
+  // 3. Prevent duplicate tasks on the same target
   const { data: existing } = await supabase
     .from("completed_tasks")
     .select("id")
@@ -27,7 +55,7 @@ export async function completeTask(
     return { error: "You have already completed this task today." };
   }
 
-  // 2. Record the completed task
+  // 4. Record the task
   const { error: taskError } = await supabase.from("completed_tasks").insert({
     user_id: userId,
     task_type: taskType,
@@ -36,11 +64,9 @@ export async function completeTask(
     day_bucket: today,
   });
 
-  if (taskError) {
-    return { error: taskError.message };
-  }
+  if (taskError) return { error: taskError.message };
 
-  // 3. Award the points using the atomic RPC function
+  // 5. Award the points
   const { error: rpcError } = await supabase.rpc("award_points", {
     p_user_id: userId,
     p_amount: rewardAmount,
@@ -49,12 +75,9 @@ export async function completeTask(
     p_metadata: { target_id: targetId },
   });
 
-  if (rpcError) {
-    return { error: rpcError.message };
-  }
+  if (rpcError) return { error: rpcError.message };
 
-  // 4. Update daily statistics
-  // Using upsert to increment the counters
+  // 6. Update daily statistics
   const { data: stats } = await supabase
     .from("user_daily_statistics")
     .select("*")
@@ -84,10 +107,10 @@ export async function completeTask(
     });
   }
 
-  // Refresh the page data
   revalidatePath("/earn/marketplace");
   revalidatePath(`/earn/creators/${targetId}`);
   revalidatePath("/earn/dashboard");
+  revalidatePath("/earn/tasks/daily");
 
   return { success: true };
 }
