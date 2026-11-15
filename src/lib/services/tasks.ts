@@ -66,7 +66,7 @@ export async function completeTask(
 
   if (taskError) return { error: taskError.message };
 
-  // 5. Award the points
+  // 5. Award the points atomically
   const { error: rpcError } = await supabase.rpc("award_points", {
     p_user_id: userId,
     p_amount: rewardAmount,

@@ -9,7 +9,6 @@ import { Loader2 } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 import { TaskButton } from "./task-button";
 
-// Helper to remove emojis from a string
 function stripEmojis(str: string) {
   if (!str) return "";
   return str.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
@@ -27,15 +26,12 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
     
   if (!creator) notFound();
 
-  // Fetch ALL videos for this creator
   const { data: videos } = await supabase
     .from("videos")
     .select("*")
     .eq("creator_id", id);
 
-  // This is the EXACT number of videos
   const actualVideoCount = videos ? videos.length : 0;
-
   const safeId = creator.id || id;
   const safeUsername = creator.username ? String(creator.username) : null;
   const name = getRealName(safeId);
@@ -47,7 +43,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header */}
+      {/* Header with Follow Button */}
       <div className="glass rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
         <Avatar className="h-32 w-32 border-4 border-background">
           <AvatarImage src={resolveAvatar(creator.avatar_url, safeId)} />
@@ -63,7 +59,6 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
             <div><p className="text-2xl font-bold">{creator.follower_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Followers</p></div>
             <div><p className="text-2xl font-bold">{creator.following_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Following</p></div>
-            {/* Displays the exact number of videos */}
             <div><p className="text-2xl font-bold">{actualVideoCount}</p><p className="text-xs text-muted-foreground uppercase">Videos</p></div>
             <div><p className="text-2xl font-bold">{creator.engagement_rate}%</p><p className="text-xs text-muted-foreground uppercase">Engagement</p></div>
           </div>
@@ -76,7 +71,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
       </div>
 
-      {/* Videos List */}
+      {/* Video List */}
       <div>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           Videos <Badge variant="secondary">{actualVideoCount}</Badge>
@@ -86,7 +81,6 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="divide-y divide-border max-h-[800px] overflow-y-auto">
             {videos?.map((video) => {
               const cleanTitle = stripEmojis(video.title);
-              // Generate unique fake URL
               const fakeUrl = `tiktok.com/@user/video/${video.id.slice(0, 8)}...`;
               
               return (

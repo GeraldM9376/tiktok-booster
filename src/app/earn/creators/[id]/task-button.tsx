@@ -13,50 +13,56 @@ import { createClient } from "@/lib/supabase/client";
 export function TaskButton({ targetId, type }: { targetId: string; type: "follow" | "like" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [hasRank, setHasRank] = useState<boolean | null>(null);
   const router = useRouter();
 
-  // Check if the user has an approved rank on mount
+  // Check if task is already completed on mount
   useEffect(() => {
-    async function checkRank() {
+    async function checkStatus() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const today = new Date().toISOString().split("T")[0];
       const { data } = await supabase
-        .from("user_ranks")
-        .select("status")
+        .from("completed_tasks")
+        .select("id")
         .eq("user_id", user.id)
-        .eq("status", "approved")
+        .eq("task_type", type)
+        .eq("target_id", targetId)
+        .eq("day_bucket", today)
         .maybeSingle();
-        
-      setHasRank(!!data);
+
+      if (data) setCompleted(true);
     }
-    checkRank();
-  }, []);
+    checkStatus();
+  }, [targetId, type]);
 
   async function handleTask() {
-    if (hasRank === false) {
-      toast.error("You need an active rank to earn credits. Please purchase one.");
-      router.push("/earn/rank");
-      return;
-    }
-
     if (completed || isLoading) return;
     setIsLoading(true);
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error("You must be logged in.");
+      setIsLoading(false);
+      return;
+    }
 
-    const reward = type === "follow" ? 10 : 2;
+    // Reward amounts: 10 for follow, 1 for like
+    const reward = type === "follow" ? 10 : 1;
     const result = await completeTask(user.id, type, targetId, reward);
 
     if (result.error) {
       toast.error(result.error);
+      // If the error is about rank, redirect them
+      if (result.error.includes("active rank")) {
+        router.push("/earn/rank");
+      }
     } else {
       setCompleted(true);
-      toast.success(`+${reward} credits earned!`);
+      toast.success(`Thank you! +${reward} credits added to your wallet.`);
+      router.refresh();
     }
     setIsLoading(false);
   }
@@ -70,7 +76,7 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
         className={`min-w-[160px] transition-all ${completed ? "bg-secondary text-foreground" : "shadow-glow"}`}
       >
         {completed ? (
-          <><Check className="mr-2 h-5 w-5" /> Following</>
+          <><Check className="mr-2 h-5 w-5" /> Followed</>
         ) : (
           <><UserPlus className="mr-2 h-5 w-5" /> Follow (+10)</>
         )}
@@ -88,6 +94,7 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
           ? "text-red-500 bg-red-500/10" 
           : "text-green-500 hover:bg-green-500/10"
       }`}
+      title={completed ? "Liked" : "Like (+1)"}
     >
       <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
     </motion.button>

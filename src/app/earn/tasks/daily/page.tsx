@@ -23,108 +23,59 @@ async function DailyTasksContent() {
 
   const today = new Date().toISOString().split("T")[0];
 
-  // 1. Get user's rank and limits
+  // 1. Get rank limit
   const { data: rankData } = await supabase
     .from("user_ranks")
-    .select("rank_packages(name, daily_follow_tasks, daily_like_tasks)")
+    .select("rank_packages(name, daily_follow_tasks)")
     .eq("user_id", user.id)
     .eq("status", "approved")
     .maybeSingle();
 
-  const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 0;
-  const likeLimit = (rankData?.rank_packages as any)?.daily_like_tasks || 0;
+  const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
   const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
 
-  // 2. Get today's completed stats
-  const { data: stats } = await supabase
-    .from("user_daily_statistics")
-    .select("follows_completed, likes_completed")
-    .eq("user_id", user.id)
-    .eq("day", today)
-    .maybeSingle();
-
-  const followsDone = stats?.follows_completed || 0;
-  const likesDone = stats?.likes_completed || 0;
-
-  // 3. Get tasks that haven't been completed today
+  // 2. Get today's completed tasks
   const { data: completed } = await supabase
     .from("completed_tasks")
     .select("target_id")
     .eq("user_id", user.id)
+    .eq("task_type", "follow")
     .eq("day_bucket", today);
 
   const completedIds = completed?.map(c => c.target_id) || [];
 
-  // 4. Fetch creators ordered by a daily pseudo-random hash to reshuffle them
+  // 3. Fetch creators not yet followed today, up to the daily limit
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
-    .limit(50); // Fetch more than we need, then filter/shuffle
+    .limit(50); // Fetch a pool to choose from
 
-  // Simple in-memory shuffle based on date
-  const shuffled = (creators || [])
-    .sort((a, b) => {
-      const hashA = (new Date(today).getTime() + a.id.charCodeAt(0)) % 1000;
-      const hashB = (new Date(today).getTime() + b.id.charCodeAt(0)) % 1000;
-      return hashA - hashB;
-    })
+  const tasks = (creators || [])
     .filter(c => !completedIds.includes(c.id))
-    .slice(0, 5);
+    .slice(0, followLimit);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Daily Tasks</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Daily Follow Tasks</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Complete tasks to earn credits. Resets daily at midnight.
+            You are on the <strong>{rankName}</strong> plan. You can follow up to {followLimit} creators today.
           </p>
         </div>
         <div className="glass px-4 py-3 rounded-xl flex items-center gap-3">
           <Clock className="h-5 w-5 text-primary" />
           <div>
             <p className="text-xs text-muted-foreground">Resets in</p>
-            <CountdownTimer />
+            <p className="font-mono font-bold text-foreground"><CountdownTimer /></p>
           </div>
         </div>
       </div>
 
-      {/* Progress Bars */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="glass p-6">
-          <div className="flex justify-between items-end mb-2">
-            <p className="font-semibold">Daily Follows</p>
-            <p className="text-sm text-muted-foreground">{followsDone} / {followLimit}</p>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all" 
-              style={{ width: `${Math.min((followsDone / (followLimit || 1)) * 100, 100)}%` }}
-            />
-          </div>
-        </Card>
-
-        <Card className="glass p-6">
-          <div className="flex justify-between items-end mb-2">
-            <p className="font-semibold">Daily Likes</p>
-            <p className="text-sm text-muted-foreground">{likesDone} / {likeLimit}</p>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all" 
-              style={{ width: `${Math.min((likesDone / (likeLimit || 1)) * 100, 100)}%` }}
-            />
-          </div>
-        </Card>
-      </div>
-
-      {/* Task List */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Today's Assignments ({rankName})</h2>
-        {shuffled.length > 0 ? (
+        {tasks.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {shuffled.map((creator) => (
+            {tasks.map((creator) => (
               <Card key={creator.id} className="glass overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                   <Avatar className="h-20 w-20">
@@ -148,8 +99,8 @@ async function DailyTasksContent() {
         ) : (
           <div className="glass rounded-xl p-12 text-center">
             <h2 className="text-xl font-bold mb-2">All caught up! 🎉</h2>
-            <p className="text-muted-foreground">You've completed all your daily tasks. Come back tomorrow!</p>
-            <Link href="/earn/marketplace" className="inline-block mt-4 text-primary hover:underline font-medium">Browse the Marketplace for more</Link>
+            <p className="text-muted-foreground">You've completed your daily follow limit. Come back tomorrow!</p>
+            <Link href="/earn/marketplace" className="inline-block mt-4 text-primary hover:underline font-medium">Browse the Marketplace for Likes</Link>
           </div>
         )}
       </div>
@@ -157,7 +108,6 @@ async function DailyTasksContent() {
   );
 }
 
-// Client component for the live countdown
 import { CountdownTimer } from "@/components/earn/countdown-timer";
 
 export default function DailyTasksPage() {
