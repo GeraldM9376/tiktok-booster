@@ -2,7 +2,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { DashboardLayoutClient } from "./dashboard-layout-client";
 
 interface DashboardShellProps {
@@ -50,11 +49,22 @@ export function DashboardShell(props: DashboardShellProps) {
   return (
     <Suspense fallback={
       <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-background">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-accent to-primary shadow-glow animate-pulse">
-          <span className="text-lg font-extrabold text-background">TB</span>
+        {/* Large Animated TikTok Logo */}
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-[#25F4EE] opacity-20 blur-2xl animate-pulse" />
+          <div className="absolute inset-0 rounded-full bg-[#FE2C55] opacity-20 blur-2xl animate-pulse delay-75" />
+          
+          <svg 
+            viewBox="0 0 448 512" 
+            className="relative h-16 w-16 animate-[bounce_2s_infinite]"
+          >
+            <path fill="#25F4EE" d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" />
+            <path fill="#FE2C55" d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" style={{ mixBlendMode: 'screen', opacity: 0.9 }} />
+          </svg>
         </div>
-        <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />
+        
+        <div className="mt-8 h-1.5 w-48 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-gradient-to-r from-[#25F4EE] to-[#FE2C55]" />
         </div>
       </div>
     }>
