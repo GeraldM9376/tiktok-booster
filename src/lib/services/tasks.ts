@@ -77,7 +77,38 @@ export async function completeTask(
 
   if (rpcError) return { error: rpcError.message };
 
-  // 6. Update daily statistics
+  // 6. UPDATE THE CREATOR OR VIDEO STATS (+1)
+  if (taskType === "follow") {
+    // Increment the creator's follower count
+    const { data: creator } = await supabase
+      .from("creators")
+      .select("follower_count")
+      .eq("id", targetId)
+      .single();
+      
+    if (creator) {
+      await supabase
+        .from("creators")
+        .update({ follower_count: creator.follower_count + 1 })
+        .eq("id", targetId);
+    }
+  } else if (taskType === "like") {
+    // Increment the video's like count
+    const { data: video } = await supabase
+      .from("videos")
+      .select("like_count")
+      .eq("id", targetId)
+      .single();
+
+    if (video) {
+      await supabase
+        .from("videos")
+        .update({ like_count: video.like_count + 1 })
+        .eq("id", targetId);
+    }
+  }
+
+  // 7. Update daily statistics
   const { data: stats } = await supabase
     .from("user_daily_statistics")
     .select("*")
@@ -107,6 +138,7 @@ export async function completeTask(
     });
   }
 
+  // 8. Refresh the UI paths
   revalidatePath("/earn/marketplace");
   revalidatePath(`/earn/creators/${targetId}`);
   revalidatePath("/earn/dashboard");
