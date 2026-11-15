@@ -8,10 +8,10 @@ import { getRealName, getRealUsername, resolveAvatar } from "@/lib/utils";
 export default async function MarketplacePage() {
   const supabase = await createClient();
   
-  // Fetch 24 creators
+  // Fetch creators and their niche
   const { data: creators, error } = await supabase
     .from("creators")
-    .select("*, niches(name)")
+    .select("id, username, avatar_url, follower_count, engagement_rate, verified, niche_id")
     .limit(24);
 
   if (error) {
@@ -21,6 +21,10 @@ export default async function MarketplacePage() {
       </DashboardShell>
     );
   }
+
+  // Fetch all niches to map them manually
+  const { data: niches } = await supabase.from("niches").select("id, name");
+  const nicheMap = new Map(niches?.map(n => [n.id, n.name]) || []);
 
   return (
     <DashboardShell type="earner" authPath="/earn/auth">
@@ -32,18 +36,12 @@ export default async function MarketplacePage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {creators?.map((creator) => {
-            // 1. Ensure we always have a string ID
+            // Safely extract values
             const safeId = creator.id || "unknown";
-            
-            // 2. Generate the names safely
             const name = getRealName(safeId);
             const username = getRealUsername(safeId, creator.username);
+            const nicheName = nicheMap.get(creator.niche_id) || "Uncategorized";
             
-            // 3. Get the niche name safely
-            const nicheName = Array.isArray(creator.niches) 
-              ? creator.niches[0]?.name 
-              : (creator.niches as any)?.name || "Uncategorized";
-
             return (
               <div key={safeId} className="glass rounded-xl p-4 transition-all hover:scale-[1.02] hover:shadow-glow cursor-pointer flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-3">
