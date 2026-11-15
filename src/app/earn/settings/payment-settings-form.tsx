@@ -45,9 +45,8 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
-      // Push directly to earnings page, which will force a fresh fetch
-      router.push("/earn/earnings");
-      router.refresh();
+      // Force a hard navigation to earnings page, bypassing cache
+      window.location.href = "/earn/earnings";
     }
   }
 
