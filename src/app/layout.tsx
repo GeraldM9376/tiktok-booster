@@ -18,7 +18,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
@@ -27,14 +26,17 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
-  keywords: ["creator growth", "portfolio project", "simulation", "TikTok Booster"],
+  // Add this icons block:
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
     siteName: site.name,
     type: "website",
   },
-    robots: { index: true, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
