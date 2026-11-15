@@ -14,6 +14,7 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
+  // Fetch all profiles with safe disambiguation for relationships
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
@@ -25,7 +26,7 @@ async function UsersContent() {
       user_roles (roles (name)),
       earner_profiles!user_id (approved),
       creator_profiles!user_id (approved),
-      user_ranks (status, rank_packages (name))
+      user_ranks!user_id (status, rank_packages (name))
     `)
     .order("created_at", { ascending: false });
 
