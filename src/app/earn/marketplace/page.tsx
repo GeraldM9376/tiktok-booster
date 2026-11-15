@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { resolveAvatar } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
@@ -62,7 +63,7 @@ async function MarketplaceContent({ searchParams }: { searchParams: Promise<{ pa
               <div className="glass rounded-xl p-4 transition-all hover:scale-[1.02] hover:shadow-glow cursor-pointer h-full flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar className="h-12 w-12 border border-border">
-                    <AvatarImage src={creator.avatar_url || undefined} />
+                    <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
                     <AvatarFallback>{creator.display_name.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="overflow-hidden">

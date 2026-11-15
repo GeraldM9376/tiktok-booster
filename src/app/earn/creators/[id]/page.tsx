@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TaskButton } from "./task-button";
 import { Loader2 } from "lucide-react";
+import { resolveAvatar } from "@/lib/utils";
 
 async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +21,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="glass rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
         <Avatar className="h-32 w-32 border-4 border-background">
-          <AvatarImage src={creator.avatar_url || undefined} />
+          <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
           <AvatarFallback className="text-4xl">{creator.display_name.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-center md:text-left">

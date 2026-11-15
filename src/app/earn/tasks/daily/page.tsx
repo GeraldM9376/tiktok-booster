@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskButton } from "../../creators/[id]/task-button";
 import { Loader2 } from "lucide-react";
+import { resolveAvatar } from "@/lib/utils";
 
 async function DailyTasksContent() {
   const supabase = await createClient();
@@ -46,7 +47,7 @@ async function DailyTasksContent() {
             <Card key={creator.id} className="glass overflow-hidden">
               <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={creator.avatar_url || undefined} />
+                  <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
                   <AvatarFallback>{creator.display_name.slice(0, 2)}</AvatarFallback>
                 </Avatar>
                 <div>
