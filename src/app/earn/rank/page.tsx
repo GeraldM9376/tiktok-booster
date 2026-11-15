@@ -22,6 +22,15 @@ async function RankContent() {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  // Fetch payment settings
+  const { data: settings } = await supabase
+    .from("platform_settings")
+    .select("key, value")
+    .in("key", ["payment_paybill", "payment_account"]);
+    
+  const paybill = settings?.find(s => s.key === "payment_paybill")?.value || "400200";
+  const account = settings?.find(s => s.key === "payment_account")?.value || "TIKTOKBOOSTER";
+
   const currentRankId = userRank?.rank_id;
   const isPending = userRank?.status === "pending";
   const isApproved = userRank?.status === "approved";
@@ -46,12 +55,12 @@ async function RankContent() {
       )}
 
       {!isApproved && !isPending ? (
-        <RankUpgradeClient ranks={ranks || []} />
+        <RankUpgradeClient ranks={ranks || []} paybill={paybill} account={account} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {ranks?.map((rank) => {
             const isCurrent = currentRankId === rank.id && isApproved;
-            const isUnlocked = currentRankId >= rank.id && isApproved; // Assuming rank ids correspond to stars
+            const isUnlocked = currentRankId >= rank.id && isApproved;
 
             return (
               <div key={rank.id} className={`glass rounded-xl p-6 flex flex-col ${isCurrent ? "border-primary shadow-glow" : ""}`}>

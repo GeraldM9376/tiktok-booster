@@ -1,7 +1,7 @@
 // src/app/earn/rank/rank-upgrade-client.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Star, CheckCircle2 } from "lucide-react";
@@ -11,11 +11,22 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 
-export function RankUpgradeClient({ ranks }: { ranks: any[] }) {
+export function RankUpgradeClient({ ranks, paybill, account }: { ranks: any[], paybill: string, account: string }) {
   const [selectedRank, setSelectedRank] = useState<any>(null);
   const [mpesaCode, setMpesaCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  
+  // Reference to the payment section to scroll to it
+  const paymentRef = useRef<HTMLDivElement>(null);
+
+  function handleRankSelect(rank: any) {
+    setSelectedRank(rank);
+    // Smooth scroll to payment form
+    setTimeout(() => {
+      paymentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +66,7 @@ export function RankUpgradeClient({ ranks }: { ranks: any[] }) {
         {ranks.map((rank) => (
           <Card
             key={rank.id}
-            onClick={() => setSelectedRank(rank)}
+            onClick={() => handleRankSelect(rank)}
             className={`p-6 cursor-pointer transition-all ${
               selectedRank?.id === rank.id ? "border-primary shadow-glow scale-105" : "hover:border-primary/50"
             }`}
@@ -77,9 +88,9 @@ export function RankUpgradeClient({ ranks }: { ranks: any[] }) {
         ))}
       </div>
 
-      {/* Payment Form */}
+      {/* Payment Form (scrolls into view when rank is clicked) */}
       {selectedRank && (
-        <div className="glass rounded-xl p-6 space-y-6">
+        <div ref={paymentRef} className="glass rounded-xl p-6 space-y-6">
           <div>
             <h2 className="text-xl font-bold">Pay for {selectedRank.name}</h2>
             <p className="text-sm text-muted-foreground">Complete the M-Pesa payment to unlock your account.</p>
@@ -88,8 +99,8 @@ export function RankUpgradeClient({ ranks }: { ranks: any[] }) {
           <div className="bg-secondary/50 p-4 rounded-lg text-sm">
             <p className="font-medium mb-2">Payment Instructions:</p>
             <p className="text-muted-foreground">
-              Paybill Number: <span className="font-semibold text-foreground">400200</span><br />
-              Account Number: <span className="font-semibold text-foreground">TIKTOKBOOSTER</span><br />
+              Paybill Number: <span className="font-semibold text-foreground">{paybill}</span><br />
+              Account Number: <span className="font-semibold text-foreground">{account}</span><br />
               Amount: <span className="font-semibold text-foreground">Ksh {selectedRank.tier_value}</span>
             </p>
           </div>

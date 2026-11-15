@@ -36,10 +36,11 @@ export const site = {
     admin: [
       { label: "Overview", href: "/admin/dashboard" },
       { label: "Users", href: "/admin/users" },
-      { label: "Rank Approvals", href: "/admin/ranks" }, // <-- Add this line
+      { label: "Rank Approvals", href: "/admin/ranks" },
       { label: "Top-Ups", href: "/admin/topups" },
       { label: "Withdrawals", href: "/admin/withdrawals" },
       { label: "Audit", href: "/admin/audit" },
+      { label: "Settings", href: "/admin/settings" }, // <-- Ensure this exists
     ],
   },
   auth: {
