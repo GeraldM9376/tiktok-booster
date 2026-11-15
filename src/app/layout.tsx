@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -26,7 +27,9 @@ export const metadata: Metadata = {
   description: site.description,
   applicationName: site.name,
   icons: {
-    icon: "/icon.svg",
+    icon: "https://www.tiktok.com/favicon.ico",
+    shortcut: "https://www.tiktok.com/favicon.ico",
+    apple: "https://www.tiktok.com/favicon.ico",
   },
   openGraph: {
     title: `${site.name} — ${site.tagline}`,

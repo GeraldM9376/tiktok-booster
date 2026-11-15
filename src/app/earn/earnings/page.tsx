@@ -24,6 +24,18 @@ async function EarningsContent() {
     .eq("user_id", user.id)
     .single();
 
+  // Fetch user's rank to determine referral requirement
+  const { data: rankData } = await supabase
+    .from("user_ranks")
+    .select("rank_packages(stars)")
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  const userStars = (rankData?.rank_packages as any)?.stars || 1; // Default to 1 star if unranked
+  // Calculate required referrals: 1 Star = 7, 2 Stars = 6, ..., 7 Stars = 1
+  const requiredReferrals = 8 - userStars;
+
   const { count: qualifiedReferrals } = await supabase
     .from("referrals")
     .select("*", { count: "exact", head: true })
@@ -55,6 +67,7 @@ async function EarningsContent() {
       <WithdrawalForm 
         availableBalance={wallet?.available_balance || 0}
         qualifiedReferrals={qualifiedReferrals || 0}
+        requiredReferrals={requiredReferrals}
         hasPaymentDetails={!!profile?.payment_details}
       />
     </div>

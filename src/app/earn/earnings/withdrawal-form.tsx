@@ -13,10 +13,12 @@ import { AlertCircle } from "lucide-react";
 export function WithdrawalForm({ 
   availableBalance, 
   qualifiedReferrals,
+  requiredReferrals,
   hasPaymentDetails 
 }: { 
   availableBalance: number; 
   qualifiedReferrals: number;
+  requiredReferrals: number;
   hasPaymentDetails: boolean;
 }) {
   const router = useRouter();
@@ -26,7 +28,7 @@ export function WithdrawalForm({
 
   const minAmount = 500;
   const hasEnoughBalance = availableBalance >= minAmount;
-  const hasEnoughReferrals = qualifiedReferrals >= 5;
+  const hasEnoughReferrals = qualifiedReferrals >= requiredReferrals;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +73,6 @@ export function WithdrawalForm({
 
   return (
     <div className="space-y-6">
-      {/* Balance Overview */}
       <div className="glass rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Available Balance</span>
@@ -134,19 +135,19 @@ export function WithdrawalForm({
         <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 text-sm animate-in fade-in slide-in-from-top-2">
           <p className="font-semibold mb-1">Referral Requirement</p>
           <p className="mb-3">
-            You need 5 qualified referrals before you can withdraw. You currently have:
+            You need {requiredReferrals} qualified referrals based on your current rank to withdraw. You currently have:
           </p>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex-1 h-2 bg-orange-500/20 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-orange-500 rounded-full" 
-                style={{ width: `${Math.min((qualifiedReferrals / 5) * 100, 100)}%` }}
+                style={{ width: `${Math.min((qualifiedReferrals / requiredReferrals) * 100, 100)}%` }}
               />
             </div>
-            <span className="font-bold">{qualifiedReferrals}/5</span>
+            <span className="font-bold">{qualifiedReferrals}/{requiredReferrals}</span>
           </div>
           <p className="text-xs">
-            Invite {5 - qualifiedReferrals} more user{5 - qualifiedReferrals !== 1 ? 's' : ''} to unlock withdrawals.
+            Invite {requiredReferrals - qualifiedReferrals} more user{requiredReferrals - qualifiedReferrals !== 1 ? 's' : ''} to unlock withdrawals.
           </p>
           <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => router.push('/earn/referral')}>
             Go to Referral Page
