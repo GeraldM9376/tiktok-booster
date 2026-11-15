@@ -19,15 +19,20 @@ export function MarketplaceGrid({ creators, count, currentPage, totalPages, sear
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {creators.map((creator: any) => {
-          const realName = getRealName(creator.id || "fallback");
-          const realUser = getRealUsername(creator.id || "fallback", creator.username || "user");
+          // Safely extract the seed and fallback strings
+          const seed = creator.id ? String(creator.id) : "unknown";
+          const fallback = creator.username ? String(creator.username) : "user";
+          
+          // Generate names safely
+          const realName = getRealName(seed);
+          const realUser = getRealUsername(seed, fallback);
           
           return (
-            <Link key={creator.id} href={`/earn/creators/${creator.id}`}>
+            <Link key={seed} href={`/earn/creators/${seed}`}>
               <div className="glass rounded-xl p-4 transition-all hover:scale-[1.02] hover:shadow-glow cursor-pointer h-full flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar className="h-12 w-12 border border-border">
-                    <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
+                    <AvatarImage src={resolveAvatar(creator.avatar_url, seed)} />
                     <AvatarFallback>{realName.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="overflow-hidden">
@@ -63,12 +68,12 @@ export function MarketplaceGrid({ creators, count, currentPage, totalPages, sear
             Page {currentPage} of {totalPages} ({count?.toLocaleString()} creators)
           </p>
           <div className="flex gap-2">
-            <Link href={`/earn/marketplace?page=${Math.max(1, currentPage - 1)}${searchQuery ? `&q=${searchQuery}` : ""}${nicheId ? `&niche=${nicheId}` : ""}`}>
+            <Link href={`/earn/marketplace?page=${Math.max(1, currentPage - 1)}`}>
               <Button variant="outline" size="sm" disabled={currentPage <= 1}>
                 <ChevronLeft className="h-4 w-4 mr-1" /> Previous
               </Button>
             </Link>
-            <Link href={`/earn/marketplace?page=${Math.min(totalPages, currentPage + 1)}${searchQuery ? `&q=${searchQuery}` : ""}${nicheId ? `&niche=${nicheId}` : ""}`}>
+            <Link href={`/earn/marketplace?page=${Math.min(totalPages, currentPage + 1)}`}>
               <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>
                 Next <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
