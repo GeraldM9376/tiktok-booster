@@ -1,8 +1,6 @@
-// src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteFooter } from "@/components/site-footer";
@@ -18,6 +16,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
@@ -26,7 +25,6 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
-  // Add this icons block:
   icons: {
     icon: "/icon.svg",
   },
