@@ -6,35 +6,32 @@ import { createClient } from "@/lib/supabase/server";
 export async function getEarnerDashboardData(userId: string) {
   const supabase = await createClient();
 
-  // 1. Wallet
   const { data: wallet } = await supabase
     .from("wallets")
     .select("available_balance, lifetime_earned, referral_earned")
     .eq("user_id", userId)
     .single();
 
-  // 2. Rank (join with rank_packages)
   const { data: rankData } = await supabase
     .from("user_ranks")
     .select("status, rank_packages(name, stars)")
     .eq("user_id", userId)
     .maybeSingle();
 
-  // 3. Today's completed tasks
-  const today = new Date().toISOString().split("T")[0];
+  const { data: todayData } = await supabase.rpc("get_local_date");
+  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+
   const { count: tasksToday } = await supabase
     .from("completed_tasks")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("day_bucket", today);
 
-  // 4. Total completed tasks
   const { count: tasksTotal } = await supabase
     .from("completed_tasks")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId);
 
-  // 5. Chart: last 7 days. We'll read the wallet_transactions for real aggregations.
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -45,15 +42,11 @@ export async function getEarnerDashboardData(userId: string) {
     .gte("created_at", sevenDaysAgo.toISOString())
     .order("created_at", { ascending: true });
 
-  // Group by day
   const dailyMap = new Map<string, number>();
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    dailyMap.set(
-      d.toLocaleDateString("en-US", { weekday: "short" }),
-      0
-    );
+    dailyMap.set(d.toLocaleDateString("en-US", { weekday: "short" }), 0);
   }
   (txData ?? []).forEach((tx) => {
     if (tx.amount > 0) {
@@ -62,10 +55,7 @@ export async function getEarnerDashboardData(userId: string) {
     }
   });
 
-  const dailyData = Array.from(dailyMap.entries()).map(([name, earnings]) => ({
-    name,
-    earnings,
-  }));
+  const dailyData = Array.from(dailyMap.entries()).map(([name, earnings]) => ({ name, earnings }));
 
   return {
     wallet: wallet || { available_balance: 0, lifetime_earned: 0, referral_earned: 0 },

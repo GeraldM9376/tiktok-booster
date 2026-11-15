@@ -24,6 +24,7 @@ export const site = {
       { label: "My Earnings", href: "/earn/earnings" },
       { label: "Ranks", href: "/earn/rank" },
       { label: "Referral", href: "/earn/referral" },
+      { label: "Payment Settings", href: "/earn/payment-settings" },
     ],
     creator: [
       { label: "Overview", href: "/creator/dashboard" },

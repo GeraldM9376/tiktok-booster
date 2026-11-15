@@ -1,4 +1,6 @@
 // src/app/earn/referral/page.tsx
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +15,6 @@ async function ReferralContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  // 1. Try to get the existing code
   const { data: existingCode } = await supabase
     .from("referral_codes")
     .select("code")
@@ -22,27 +23,21 @@ async function ReferralContent() {
 
   let finalCode = existingCode?.code;
 
-  // 2. If no code exists, generate one and insert it
   if (!finalCode) {
     const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
     const { data: insertedCode, error } = await supabase
       .from("referral_codes")
       .insert({ user_id: user.id, code: generatedCode })
       .select("code")
       .single();
-      
     if (error) {
       return <div className="p-8 text-red-500">Error generating code: {error.message}</div>;
     }
-    
     finalCode = insertedCode.code;
   }
 
-  // 3. Construct the link properly
   const referralLink = `${site.url}/earn/auth?ref=${finalCode}`;
 
-  // 4. Get referrals
   const { data: referrals } = await supabase
     .from("referrals")
     .select("*, profiles:referred_id(email, display_name)")
@@ -69,12 +64,7 @@ async function ReferralContent() {
         <div className="flex-1 w-full">
           <p className="text-sm text-muted-foreground mb-1">Your Invite Link</p>
           <div className="flex gap-2">
-            <input 
-              type="text" 
-              readOnly 
-              value={referralLink} 
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground" 
-            />
+            <input type="text" readOnly value={referralLink} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground" />
             <CopyButton text={referralLink} />
           </div>
         </div>

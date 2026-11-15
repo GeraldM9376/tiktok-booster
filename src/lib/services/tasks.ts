@@ -11,8 +11,10 @@ export async function completeTask(
   rewardAmount: number
 ) {
   const supabase = await createClient();
-  const { data: { local_date } } = await supabase.rpc("get_local_date");
-  const today = local_date || new Date().toISOString().split("T")[0];
+  
+  // Use Kenya time (EAT) for today's date
+  const { data: today } = await supabase.rpc("get_local_date");
+  const dayBucket = today || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   // 1. Check if user has an active rank
   const { data: rankData } = await supabase
@@ -36,7 +38,7 @@ export async function completeTask(
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("task_type", taskType)
-    .eq("day_bucket", today);
+    .eq("day_bucket", dayBucket);
 
   if (completedToday && completedToday >= limit) {
     return { error: `You have reached your daily limit of ${limit} ${taskType}s. Upgrade your rank for more.` };
@@ -49,7 +51,7 @@ export async function completeTask(
     .eq("user_id", userId)
     .eq("task_type", taskType)
     .eq("target_id", targetId)
-    .eq("day_bucket", today)
+    .eq("day_bucket", dayBucket)
     .maybeSingle();
 
   if (existing) {
@@ -62,12 +64,12 @@ export async function completeTask(
     task_type: taskType,
     target_id: targetId,
     reward: rewardAmount,
-    day_bucket: today,
+    day_bucket: dayBucket,
   });
 
   if (taskError) return { error: taskError.message };
 
-  // 5. Award the points
+  // 5. Award points
   const { error: rpcError } = await supabase.rpc("award_points", {
     p_user_id: userId,
     p_amount: rewardAmount,
@@ -78,19 +80,19 @@ export async function completeTask(
 
   if (rpcError) return { error: rpcError.message };
 
-  // 6. Increment Creator/Video Stats using the new RPCs
+  // 6. Increment creator/video counts
   if (taskType === "follow") {
     await supabase.rpc("increment_follower_count", { creator_id: targetId });
   } else if (taskType === "like") {
     await supabase.rpc("increment_like_count", { video_id: targetId });
   }
 
-  // 7. Update daily statistics
+  // 7. Update daily stats
   const { data: stats } = await supabase
     .from("user_daily_statistics")
     .select("*")
     .eq("user_id", userId)
-    .eq("day", today)
+    .eq("day", dayBucket)
     .maybeSingle();
 
   if (stats) {
@@ -103,11 +105,11 @@ export async function completeTask(
         likes_completed: taskType === "like" ? stats.likes_completed + 1 : stats.likes_completed,
       })
       .eq("user_id", userId)
-      .eq("day", today);
+      .eq("day", dayBucket);
   } else {
     await supabase.from("user_daily_statistics").insert({
       user_id: userId,
-      day: today,
+      day: dayBucket,
       earnings: rewardAmount,
       tasks_completed: 1,
       follows_completed: taskType === "follow" ? 1 : 0,
@@ -115,7 +117,6 @@ export async function completeTask(
     });
   }
 
-  // 8. Clear the cache for the specific pages
   revalidatePath("/earn/marketplace");
   revalidatePath(`/earn/creators/${targetId}`);
   revalidatePath("/earn/dashboard");

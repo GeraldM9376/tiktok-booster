@@ -25,11 +25,10 @@ async function DailyTasksContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  // Use local time for "today" to match the user's midnight
-  const { data: { local_date } } = await supabase.rpc("get_local_date");
-  const today = local_date || new Date().toLocaleDateString("en-CA");// YYYY-MM-DD format
+  // Kenya time for today
+  const { data: todayData } = await supabase.rpc("get_local_date");
+  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  // 1. Get rank limit
   const { data: rankData } = await supabase
     .from("user_ranks")
     .select("rank_packages(name, daily_follow_tasks)")
@@ -40,14 +39,22 @@ async function DailyTasksContent() {
   const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
   const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
 
-  // 2. Fetch a pool of creators
+  // Fetch creators fresh every day (shuffle based on today's date)
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
-    .order("follower_count", { ascending: false })
-    .limit(50); 
+    .limit(50);
 
-  // 3. Get the completed IDs for TODAY only
+  // Shuffle deterministically by today's date
+  const dailySeed = today.replace(/-/g, "").slice(2);
+  const shuffledCreators = (creators || [])
+    .sort((a, b) => {
+      const hashA = (parseInt(dailySeed) + a.id.charCodeAt(0)) % 1000;
+      const hashB = (parseInt(dailySeed) + b.id.charCodeAt(0)) % 1000;
+      return hashA - hashB;
+    })
+    .slice(0, followLimit);
+
   const { data: completed } = await supabase
     .from("completed_tasks")
     .select("target_id")
@@ -83,9 +90,9 @@ async function DailyTasksContent() {
       )}
 
       <div>
-        {creators && creators.length > 0 ? (
+        {shuffledCreators.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {creators.map((creator) => (
+            {shuffledCreators.map((creator) => (
               <Card key={creator.id} className="glass overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                   <Avatar className="h-20 w-20">

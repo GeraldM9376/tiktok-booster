@@ -1,4 +1,6 @@
 // src/app/earn/dashboard/page.tsx
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getEarnerDashboardData } from "@/lib/services/earnings";
@@ -15,8 +17,9 @@ async function DashboardContent() {
 
   const data = await getEarnerDashboardData(user.id);
 
-  // Fetch today's specific statistics
-  const today = new Date().toISOString().split("T")[0];
+  const { data: todayData } = await supabase.rpc("get_local_date");
+  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+
   const { data: todayStats } = await supabase
     .from("user_daily_statistics")
     .select("earnings, tasks_completed")
@@ -41,7 +44,7 @@ async function DashboardContent() {
           icon={<Wallet className="h-4 w-4 text-primary" />}
           label="Total Earnings"
           value={data.wallet.lifetime_earned.toLocaleString()}
-          sub="credits earned"
+          sub="credits lifetime"
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4 text-emerald-400" />}
@@ -51,9 +54,9 @@ async function DashboardContent() {
         />
         <StatCard
           icon={<CheckCircle2 className="h-4 w-4 text-blue-400" />}
-          label="Tasks Completed"
-          value={(data.tasksTotal).toLocaleString()}
-          sub={`${todayTasks} today`}
+          label="Available Balance"
+          value={data.wallet.available_balance.toLocaleString()}
+          sub="ready to withdraw"
         />
         <StatCard
           icon={<Star className="h-4 w-4 text-yellow-400" />}

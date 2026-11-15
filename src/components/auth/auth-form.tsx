@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Eye, EyeOff, Wifi, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, Wifi } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -24,10 +24,9 @@ interface AuthFormProps {
 export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  
   const searchParams = useSearchParams();
-  const refCode = searchParams.get("ref") || "";
+  const refFromUrl = searchParams.get("ref") || "";
+  const [refCode, setRefCode] = useState(refFromUrl);
 
   async function handleLogin(formData: FormData) {
     setIsLoading(true);
@@ -41,45 +40,17 @@ export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
   async function handleSignup(formData: FormData) {
     setIsLoading(true);
     const result = await signup(formData, redirectTo, type === "admin" ? "earner" : type);
-    
     if (result?.error) {
       toast.error(result.error);
       setIsLoading(false);
-    } else {
-      // Success! Show the Kenya message briefly
-      setIsSuccess(true);
-      // The server action will redirect automatically, but we show this state while it happens
     }
   }
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-lg">
-      <div className="glass rounded-3xl p-10 shadow-2xl relative overflow-hidden">
-        
-        {/* Loading / Success Overlay for Signup */}
-        {isSuccess && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
-            <p className="text-sm text-muted-foreground mb-6">Setting up your earning dashboard...</p>
-            
-            <div className="w-full bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start gap-3 text-sm text-primary text-left">
-              <Wifi className="h-5 w-5 shrink-0 mt-0.5" />
-              <p>
-                <strong>Network & IP Detected:</strong> Our systems have identified your network IP address as originating from Kenya. Your account is configured to process all earnings in Ksh (KES) for seamless local compatibility.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
+      <div className="glass rounded-3xl p-10 shadow-2xl">
         <div className="mb-8 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to home
           </Link>
         </div>
@@ -116,7 +87,28 @@ export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
               <form action={handleSignup} className="space-y-6 w-full">
                 <input type="hidden" name="ref" value={refCode} />
                 <AuthFields isLoading={isLoading} isSignup={true} showPassword={showPassword} setShowPassword={setShowPassword} type={type} />
-                
+
+                {/* Referral code field */}
+                <div className="space-y-2 w-full">
+                  <Label htmlFor="ref_code" className="text-sm font-medium">Referral Code (optional)</Label>
+                  <Input
+                    id="ref_code"
+                    name="ref_code"
+                    placeholder="e.g. ABC123"
+                    value={refCode}
+                    onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                    disabled={isLoading}
+                    className="h-12 px-4"
+                  />
+                </div>
+
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary">
+                  <Wifi className="h-5 w-5 shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Network & IP Detected:</strong> Our systems have identified your network IP address as originating from Kenya. All earnings and transactions will be processed in Ksh (KES) for seamless local compatibility.
+                  </p>
+                </div>
+
                 <Button type="submit" className="w-full h-12 text-base shadow-glow" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Create Account
                 </Button>
