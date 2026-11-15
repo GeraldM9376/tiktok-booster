@@ -14,7 +14,9 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  // Fetch all profiles with their associated data safely
+  // Fetch all profiles. Notice the '!user_id' syntax.
+  // This tells Supabase to specifically use the user_id column for the join, 
+  // preventing the "multiple relationships found" error.
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
@@ -24,8 +26,8 @@ async function UsersContent() {
       created_at,
       wallets (available_balance),
       user_roles (roles (name)),
-      earner_profiles (approved),
-      creator_profiles (approved)
+      earner_profiles!user_id (approved),
+      creator_profiles!user_id (approved)
     `)
     .order("created_at", { ascending: false });
 
