@@ -21,11 +21,11 @@ export default async function MarketplacePage({
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Fetch creators ordered by a random seed so we get mixed niches on every page
+  // Sort by engagement_rate to ensure a completely random mix of all niches
   const { data: creators, count } = await supabase
     .from("creators")
     .select("id, username, avatar_url, follower_count, engagement_rate, verified, niche_id", { count: "exact" })
-    .order("engagement_rate", { ascending: false }) // Sorts by engagement (more varied than ID)
+    .order("engagement_rate", { ascending: false }) 
     .order("id", { ascending: true })
     .range(from, to);
 

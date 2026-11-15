@@ -27,7 +27,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
     
   if (!creator) notFound();
 
-  // Fetch ALL videos, not just 30
+  // Fetch ALL videos for this creator
   const { data: videos, count: videoCount } = await supabase
     .from("videos")
     .select("*", { count: "exact" })
@@ -60,7 +60,8 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
             <div><p className="text-2xl font-bold">{creator.follower_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Followers</p></div>
             <div><p className="text-2xl font-bold">{creator.following_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase">Following</p></div>
-            <div><p className="text-2xl font-bold">{videoCount || creator.video_count || 0}</p><p className="text-xs text-muted-foreground uppercase">Videos</p></div>
+            {/* Show the real count of videos */}
+            <div><p className="text-2xl font-bold">{videoCount || 0}</p><p className="text-xs text-muted-foreground uppercase">Videos</p></div>
             <div><p className="text-2xl font-bold">{creator.engagement_rate}%</p><p className="text-xs text-muted-foreground uppercase">Engagement</p></div>
           </div>
           <div className="mt-4">
@@ -79,11 +80,10 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
         </h2>
         
         <div className="glass rounded-xl overflow-hidden">
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border max-h-[800px] overflow-y-auto"> {/* Added scroll for many videos */}
             {videos?.map((video) => {
-              // Clean the title by removing emojis
               const cleanTitle = stripEmojis(video.title);
-              // Create the truncated URL
+              // Generate a unique fake URL based on the video ID
               const fakeUrl = `tiktok.com/@user/video/${video.id.slice(0, 8)}...`;
               
               return (
