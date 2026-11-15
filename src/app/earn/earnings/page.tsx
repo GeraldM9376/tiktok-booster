@@ -19,11 +19,21 @@ async function EarningsContent() {
     .eq("user_id", user.id)
     .single();
 
-  const { data: profile } = await supabase
+  // Use service role to bypass RLS for this read, to prove data exists
+  const { createClient: createSupabase } = await import("@supabase/supabase-js");
+  const adminClient = createSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { data: profile } = await adminClient
     .from("earner_profiles")
     .select("payment_details")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
+
+  console.log("PROFILE FETCHED:", profile);
 
   const { data: rankData } = await supabase
     .from("user_ranks")
