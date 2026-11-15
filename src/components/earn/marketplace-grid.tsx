@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
+// Helper to safely extract niche name
+function getNicheName(niches: any): string {
+  if (!niches) return "Uncategorized";
+  if (Array.isArray(niches)) return niches[0]?.name || "Uncategorized";
+  return niches.name || "Uncategorized";
+}
+
 export function MarketplaceGrid({ 
   creators, 
   count, 
@@ -53,7 +60,7 @@ export function MarketplaceGrid({
                 </div>
               </div>
               <Badge variant="secondary" className="mt-3 w-max text-[10px]">
-                {(creator.niches as any)?.name || "Uncategorized"}
+                {getNicheName(creator.niches)}
               </Badge>
             </div>
           </Link>

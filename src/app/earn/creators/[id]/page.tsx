@@ -9,6 +9,12 @@ import { TaskButton } from "./task-button";
 import { Loader2 } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
+function getNicheName(niches: any): string {
+  if (!niches) return "Uncategorized";
+  if (Array.isArray(niches)) return niches[0]?.name || "Uncategorized";
+  return niches.name || "Uncategorized";
+}
+
 async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -36,6 +42,9 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
             <div><p className="text-2xl font-bold">{creator.following_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Following</p></div>
             <div><p className="text-2xl font-bold">{creator.video_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Videos</p></div>
             <div><p className="text-2xl font-bold">{creator.engagement_rate}%</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Engagement</p></div>
+          </div>
+          <div className="mt-4">
+            <Badge variant="secondary">{getNicheName(creator.niches)}</Badge>
           </div>
         </div>
         <div className="mt-6 md:mt-0"><TaskButton targetId={creator.id} type="follow" /></div>
