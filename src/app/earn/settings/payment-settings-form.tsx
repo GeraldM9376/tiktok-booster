@@ -34,7 +34,14 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
-      window.location.href = "/earn/earnings"; // Hard reload to guarantee fresh data
+      
+      // 1. Refresh the current page's cache so the form shows the new data
+      router.refresh();
+      
+      // 2. Hard reload to the earnings page to guarantee fresh state
+      setTimeout(() => {
+        window.location.href = "/earn/earnings";
+      }, 500);
     }
   }
 
