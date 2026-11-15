@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/client";
+import { savePaymentDetails } from "@/lib/services/settings";
 
 export function PaymentSettingsForm({ initialDetails }: { initialDetails: any }) {
   const router = useRouter();
@@ -23,30 +23,18 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
     e.preventDefault();
     setIsLoading(true);
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("You are not logged in.");
-      setIsLoading(false);
-      return;
-    }
-
     const paymentDetails = method === "mpesa" 
       ? { method: "mpesa", mpesa_number: mpesaNumber }
       : { method: "bank", bank_name: bankName, account_number: accountNumber };
 
-    // Call the secure RPC function
-    const { error } = await supabase.rpc("update_payment_details", {
-      details: paymentDetails,
-    });
+    const result = await savePaymentDetails(paymentDetails);
 
-    if (error) {
-      toast.error(error.message);
+    if (result.error) {
+      toast.error(result.error);
       setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
-      // Force a hard reload to bypass any caching
-      window.location.href = "/earn/earnings";
+      window.location.href = "/earn/earnings"; // Hard reload to guarantee fresh data
     }
   }
 
@@ -68,32 +56,17 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       {method === "mpesa" ? (
         <div className="space-y-2">
           <Label>M-Pesa Phone Number</Label>
-          <Input 
-            placeholder="e.g. 0712345678" 
-            value={mpesaNumber} 
-            onChange={(e) => setMpesaNumber(e.target.value)} 
-            required 
-          />
+          <Input placeholder="e.g. 0712345678" value={mpesaNumber} onChange={(e) => setMpesaNumber(e.target.value)} required />
         </div>
       ) : (
         <>
           <div className="space-y-2">
             <Label>Bank Name</Label>
-            <Input 
-              placeholder="e.g. Equity Bank" 
-              value={bankName} 
-              onChange={(e) => setBankName(e.target.value)} 
-              required 
-            />
+            <Input placeholder="e.g. Equity Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label>Account Number</Label>
-            <Input 
-              placeholder="Your account number" 
-              value={accountNumber} 
-              onChange={(e) => setAccountNumber(e.target.value)} 
-              required 
-            />
+            <Input placeholder="Your account number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
           </div>
         </>
       )}
