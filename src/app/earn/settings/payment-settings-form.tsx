@@ -14,6 +14,7 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   
+  // Safely default to empty strings
   const [method, setMethod] = useState(initialDetails?.method || "mpesa");
   const [mpesaNumber, setMpesaNumber] = useState(initialDetails?.mpesa_number || "");
   const [bankName, setBankName] = useState(initialDetails?.bank_name || "");
@@ -34,11 +35,7 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
-      
-      // 1. Refresh the current page's cache so the form shows the new data
       router.refresh();
-      
-      // 2. Hard reload to the earnings page to guarantee fresh state
       setTimeout(() => {
         window.location.href = "/earn/earnings";
       }, 500);

@@ -13,13 +13,16 @@ async function SettingsContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
+  // Use maybeSingle() to prevent crashes if the profile doesn't exist yet
   const { data: profile } = await supabase
     .from("earner_profiles")
     .select("payment_details")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  const hasDetails = !!profile?.payment_details;
+  // Safe extraction
+  const paymentDetails = profile?.payment_details || null;
+  const hasDetails = !!paymentDetails;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -39,7 +42,7 @@ async function SettingsContent() {
         </p>
       </div>
       <div className="glass rounded-xl p-6">
-        <PaymentSettingsForm initialDetails={profile?.payment_details} />
+        <PaymentSettingsForm initialDetails={paymentDetails} />
       </div>
     </div>
   );
