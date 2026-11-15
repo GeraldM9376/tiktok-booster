@@ -24,29 +24,30 @@ function hashString(str: string): number {
 }
 
 export function getRealName(seed: string): string {
-  if (!seed) return "Creator";
-  const hash = hashString(seed);
+  const safeSeed = seed || "unknown";
+  const hash = hashString(safeSeed);
   const firstName = FIRST_NAMES[hash % FIRST_NAMES.length];
   const lastName = LAST_NAMES[(hash >> 4) % LAST_NAMES.length];
   return `${firstName} ${lastName}`;
 }
 
-export function getRealUsername(seed: string, fallback: string): string {
-  if (!seed) return "user";
-  const hash = hashString(seed);
-  const firstName = FIRST_NAMES[hash % FIRST_NAMES.length].toLowerCase();
-  const lastName = LAST_NAMES[(hash >> 4) % LAST_NAMES.length].toLowerCase();
+export function getRealUsername(seed: string, fallback: any): string {
+  // Catch every possible way fallback could be empty
+  if (typeof fallback !== "string" || !fallback) {
+    const safeSeed = seed || "unknown";
+    const hash = hashString(safeSeed);
+    const firstName = FIRST_NAMES[hash % FIRST_NAMES.length].toLowerCase();
+    const lastName = LAST_NAMES[(hash >> 4) % LAST_NAMES.length].toLowerCase();
+    return `${firstName}_${lastName}`;
+  }
   
-  // The fix is here: ensure fallback is a string before calling toLowerCase
-  const safeFallback = (fallback || "user").toLowerCase();
-  
-  // Return the generated name, or the safe fallback if needed
-  return `${firstName}_${lastName}`;
+  // It is a valid string, so toLowerCase is safe
+  return fallback.toLowerCase();
 }
 
 export function getHumanAvatar(seed: string, gender?: "men" | "women"): string {
-  if (!seed) seed = "fallback";
-  const hash = hashString(seed);
+  const safeSeed = seed || "unknown";
+  const hash = hashString(safeSeed);
   const index = hash % 99;
   const resolvedGender = gender || (hash % 2 === 0 ? "men" : "women");
   return `https://randomuser.me/api/portraits/${resolvedGender}/${index}.jpg`;
