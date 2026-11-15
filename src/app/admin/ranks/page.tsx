@@ -12,22 +12,27 @@ async function RanksContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  const { data: requests } = await supabase
+  // Fetch rank requests with explicit disambiguation
+  const { data: requests, error } = await supabase
     .from("user_ranks")
     .select(`
-      id,
+      user_id,
       status,
       purchased_at,
-      profiles (id, email),
+      profiles!user_id (id, email),
       rank_packages (name, tier_value)
     `)
     .order("purchased_at", { ascending: false });
+
+  if (error) {
+    return <div className="p-8 text-red-500">Error loading requests: {error.message}</div>;
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Rank Approvals</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Review and approve user rank purchases.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Review and approve user rank purchases. ({requests?.length || 0} total)</p>
       </div>
 
       <div className="glass rounded-xl overflow-hidden">
@@ -45,15 +50,15 @@ async function RanksContent() {
             </thead>
             <tbody className="divide-y divide-border">
               {requests?.map((req) => (
-                <tr key={req.id} className="hover:bg-secondary/20">
+                <tr key={req.user_id} className="hover:bg-secondary/20">
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {new Date(req.purchased_at).toLocaleDateString()}
+                    {req.purchased_at ? new Date(req.purchased_at).toLocaleDateString() : "-"}
                   </td>
-                  <td className="px-4 py-3">{(req.profiles as any)?.email}</td>
+                  <td className="px-4 py-3">{(req.profiles as any)?.email || "Unknown"}</td>
                   <td className="px-4 py-3 font-semibold text-primary">
-                    {(req.rank_packages as any)?.name}
+                    {(req.rank_packages as any)?.name || "-"}
                   </td>
-                  <td className="px-4 py-3">Ksh {(req.rank_packages as any)?.tier_value.toLocaleString()}</td>
+                  <td className="px-4 py-3">Ksh {(req.rank_packages as any)?.tier_value?.toLocaleString() || 0}</td>
                   <td className="px-4 py-3">
                     <Badge variant={req.status === "approved" ? "default" : req.status === "rejected" ? "destructive" : "secondary"}>
                       {req.status}
@@ -61,13 +66,20 @@ async function RanksContent() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     {req.status === "pending" ? (
-                      <RankActions requestId={req.id} userId={(req.profiles as any)?.id} />
+                      <RankActions requestId={req.user_id} userId={req.user_id} />
                     ) : (
                       <span className="text-xs text-muted-foreground">Processed</span>
                     )}
                   </td>
                 </tr>
               ))}
+              {(!requests || requests.length === 0) && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    No rank requests found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
