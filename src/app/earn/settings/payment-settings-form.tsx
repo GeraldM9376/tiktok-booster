@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/client";
 export function PaymentSettingsForm({ initialDetails }: { initialDetails: any }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Parse initial details safely
   const [method, setMethod] = useState(initialDetails?.method || "mpesa");
   const [mpesaNumber, setMpesaNumber] = useState(initialDetails?.mpesa_number || "");
   const [bankName, setBankName] = useState(initialDetails?.bank_name || "");
@@ -24,7 +26,11 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error("You are not logged in.");
+      setIsLoading(false);
+      return;
+    }
 
     const paymentDetails = method === "mpesa" 
       ? { method: "mpesa", mpesa_number: mpesaNumber }
@@ -38,7 +44,7 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Payment details saved!");
+      toast.success("Payment details saved successfully!");
       router.refresh();
     }
     setIsLoading(false);
@@ -92,9 +98,18 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
         </>
       )}
 
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Saving..." : "Save Payment Details"}
-      </Button>
+      <div className="flex gap-4">
+         <Button type="submit" disabled={isLoading} className="flex-1">
+          {isLoading 
+            ? "Saving..." 
+            : initialDetails 
+              ? "Update Details" 
+              : "Save Details"}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.push("/earn/earnings")}>
+          Cancel
+        </Button>
+      </div>
     </form>
   );
 }

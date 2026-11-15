@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { PaymentSettingsForm } from "./payment-settings-form";
+import { Button } from "@/components/ui/button";
 
 async function SettingsContent() {
   const supabase = await createClient();
@@ -17,12 +19,23 @@ async function SettingsContent() {
     .eq("user_id", user.id)
     .single();
 
+  const hasDetails = !!profile?.payment_details;
+
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Payment Settings</h1>
+        <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2 text-muted-foreground">
+          <Link href="/earn/earnings">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Withdrawals
+          </Link>
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {hasDetails ? "Update Payment Details" : "Set Up Payment Details"}
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Set up your payment details to receive withdrawals.
+          {hasDetails 
+            ? "You can update your payment details below." 
+            : "Set up your payment details to receive withdrawals."}
         </p>
       </div>
       <div className="glass rounded-xl p-6">
