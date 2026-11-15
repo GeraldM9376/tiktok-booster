@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const PAGE_SIZE = 60; // Show 60 creators per page
+const PAGE_SIZE = 60;
 
 export default async function MarketplacePage({
   searchParams,
@@ -21,11 +21,11 @@ export default async function MarketplacePage({
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Fetch paginated creators
+  // Fetch 60 creators, ordered by ID (to mix them up) instead of follower count
   const { data: creators, count } = await supabase
     .from("creators")
     .select("id, username, avatar_url, follower_count, engagement_rate, verified, niche_id", { count: "exact" })
-    .order("follower_count", { ascending: false })
+    .order("id", { ascending: true }) // This mixes niches together
     .range(from, to);
 
   // Fetch all niches to map them
@@ -47,15 +47,11 @@ export default async function MarketplacePage({
         <MarketplaceGrid 
           creators={creators || []} 
           nicheMap={nicheMap} 
-          startIndex={from + 1} // Pass the starting number (1, 61, 121...)
         />
 
-        {/* Pagination Controls */}
+        {/* Pagination Controls - Removed the "Showing X of Y" text */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-6 border-t border-border/50">
-            <p className="text-sm text-muted-foreground">
-              Showing {from + 1} to {Math.min(to + 1, count || 0)} of {count?.toLocaleString()} creators
-            </p>
+          <div className="flex items-center justify-end pt-6 border-t border-border/50">
             <div className="flex gap-2">
               <Link href={`/earn/marketplace?page=${Math.max(1, currentPage - 1)}`}>
                 <Button variant="outline" disabled={currentPage <= 1}>
