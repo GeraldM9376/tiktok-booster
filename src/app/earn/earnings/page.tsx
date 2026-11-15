@@ -1,4 +1,5 @@
 // src/app/earn/earnings/page.tsx
+export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";

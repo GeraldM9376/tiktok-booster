@@ -14,7 +14,6 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Parse initial details safely
   const [method, setMethod] = useState(initialDetails?.method || "mpesa");
   const [mpesaNumber, setMpesaNumber] = useState(initialDetails?.mpesa_number || "");
   const [bankName, setBankName] = useState(initialDetails?.bank_name || "");
@@ -43,11 +42,13 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
 
     if (error) {
       toast.error(error.message);
+      setIsLoading(false);
     } else {
       toast.success("Payment details saved successfully!");
+      // Push directly to earnings page, which will force a fresh fetch
+      router.push("/earn/earnings");
       router.refresh();
     }
-    setIsLoading(false);
   }
 
   return (
@@ -99,12 +100,8 @@ export function PaymentSettingsForm({ initialDetails }: { initialDetails: any })
       )}
 
       <div className="flex gap-4">
-         <Button type="submit" disabled={isLoading} className="flex-1">
-          {isLoading 
-            ? "Saving..." 
-            : initialDetails 
-              ? "Update Details" 
-              : "Save Details"}
+        <Button type="submit" disabled={isLoading} className="flex-1">
+          {isLoading ? "Saving..." : initialDetails ? "Update Details" : "Save Details"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/earn/earnings")}>
           Cancel
