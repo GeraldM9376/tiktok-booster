@@ -49,8 +49,13 @@ async function DashboardShellContent({ children, type, authPath }: DashboardShel
 export function DashboardShell(props: DashboardShellProps) {
   return (
     <Suspense fallback={
-      <div className="flex min-h-dvh w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-background">
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-accent to-primary shadow-glow animate-pulse">
+          <span className="text-lg font-extrabold text-background">TB</span>
+        </div>
+        <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />
+        </div>
       </div>
     }>
       <DashboardShellContent {...props} />
