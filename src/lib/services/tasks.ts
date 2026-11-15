@@ -41,7 +41,7 @@ export async function completeTask(
     return { error: `You have reached your daily limit of ${limit} ${taskType}s. Upgrade your rank for more.` };
   }
 
-  // 3. Prevent duplicate tasks on the same target
+  // 3. Prevent duplicate tasks
   const { data: existing } = await supabase
     .from("completed_tasks")
     .select("id")
@@ -66,7 +66,7 @@ export async function completeTask(
 
   if (taskError) return { error: taskError.message };
 
-  // 5. Award the points atomically
+  // 5. Award the points
   const { error: rpcError } = await supabase.rpc("award_points", {
     p_user_id: userId,
     p_amount: rewardAmount,
@@ -77,35 +77,11 @@ export async function completeTask(
 
   if (rpcError) return { error: rpcError.message };
 
-  // 6. UPDATE THE CREATOR OR VIDEO STATS (+1)
+  // 6. Increment Creator/Video Stats using the new RPCs
   if (taskType === "follow") {
-    // Increment the creator's follower count
-    const { data: creator } = await supabase
-      .from("creators")
-      .select("follower_count")
-      .eq("id", targetId)
-      .single();
-      
-    if (creator) {
-      await supabase
-        .from("creators")
-        .update({ follower_count: creator.follower_count + 1 })
-        .eq("id", targetId);
-    }
+    await supabase.rpc("increment_follower_count", { creator_id: targetId });
   } else if (taskType === "like") {
-    // Increment the video's like count
-    const { data: video } = await supabase
-      .from("videos")
-      .select("like_count")
-      .eq("id", targetId)
-      .single();
-
-    if (video) {
-      await supabase
-        .from("videos")
-        .update({ like_count: video.like_count + 1 })
-        .eq("id", targetId);
-    }
+    await supabase.rpc("increment_like_count", { video_id: targetId });
   }
 
   // 7. Update daily statistics
@@ -138,7 +114,7 @@ export async function completeTask(
     });
   }
 
-  // 8. Refresh the UI paths
+  // 8. Clear the cache for the specific pages
   revalidatePath("/earn/marketplace");
   revalidatePath(`/earn/creators/${targetId}`);
   revalidatePath("/earn/dashboard");

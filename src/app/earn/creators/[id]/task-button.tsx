@@ -52,7 +52,6 @@ export function TaskButton({
       return;
     }
     
-    // Otherwise, run the earning logic
     if (completed || isLoading) return;
     setIsLoading(true);
 
@@ -75,7 +74,8 @@ export function TaskButton({
     } else {
       setCompleted(true);
       toast.success(`Thank you! +${reward} credits added to your wallet.`);
-      router.refresh();
+      // Force a hard reload to fetch the new like/follower counts
+      window.location.reload();
     }
     setIsLoading(false);
   }
