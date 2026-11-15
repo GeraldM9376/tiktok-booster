@@ -14,6 +14,7 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
+  // Fetch all profiles with safe disambiguation for relationships
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
@@ -25,7 +26,7 @@ async function UsersContent() {
       user_roles (roles (name)),
       earner_profiles!user_id (approved),
       creator_profiles!user_id (approved),
-      user_ranks!user_id (status, rank_packages (name), purchased_at)
+      user_ranks!user_id (status, purchased_at, rank_packages (name))
     `)
     .order("created_at", { ascending: false });
 
@@ -60,14 +61,23 @@ async function UsersContent() {
                 const role = (profile.user_roles as any)?.[0]?.roles?.name || "earner";
                 const balance = (profile.wallets as any)?.[0]?.available_balance || 0;
                 
-                // Extract the most recent rank based on purchased_at
-                const ranks = (profile.user_ranks as any) || [];
-                const latestRank = ranks.length > 0 
-                  ? ranks.sort((a: any, b: any) => new Date(b.purchased_at).getTime() - new Date(a.purchased_at).getTime())[0]
-                  : null;
-                
-                const rankName = latestRank?.rank_packages?.name || "Unranked";
-                const rankStatus = latestRank?.status || "none";
+                // Safely extract the most recent rank (handles both array and single object returns)
+                let rankName = "Unranked";
+                let rankStatus = "none";
+                const rankData = profile.user_ranks as any;
+
+                if (rankData) {
+                  if (Array.isArray(rankData) && rankData.length > 0) {
+                    const latestRank = rankData.sort((a: any, b: any) => 
+                      new Date(b.purchased_at || 0).getTime() - new Date(a.purchased_at || 0).getTime()
+                    )[0];
+                    rankName = latestRank.rank_packages?.name || "Unranked";
+                    rankStatus = latestRank.status || "none";
+                  } else if (typeof rankData === "object" && rankData.rank_packages) {
+                    rankName = rankData.rank_packages.name || "Unranked";
+                    rankStatus = rankData.status || "none";
+                  }
+                }
 
                 return (
                   <tr key={profile.id} className="hover:bg-secondary/20">
