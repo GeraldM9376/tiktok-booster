@@ -14,8 +14,8 @@ async function UsersContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/auth");
 
-  // Fetch all profiles with their wallet balance, roles, and earner/creator status
-  const { data: profiles } = await supabase
+  // Fetch all profiles with their associated data safely
+  const { data: profiles, error } = await supabase
     .from("profiles")
     .select(`
       id,
@@ -29,12 +29,16 @@ async function UsersContent() {
     `)
     .order("created_at", { ascending: false });
 
+  if (error) {
+    return <div className="p-8 text-red-500">Error loading users: {error.message}</div>;
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">User Directory</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Manage all registered accounts on the platform.
+          Manage all registered accounts on the platform. ({profiles?.length || 0} total)
         </p>
       </div>
 
@@ -57,16 +61,14 @@ async function UsersContent() {
                 const balance = (profile.wallets as any)?.[0]?.available_balance || 0;
                 const earnerApproved = (profile.earner_profiles as any)?.[0]?.approved;
                 const creatorApproved = (profile.creator_profiles as any)?.[0]?.approved;
-                
-                const isApproved = role === "earner" ? earnerApproved : creatorApproved;
-                const safeId = profile.id;
+                const isApproved = role === "earner" ? earnerApproved : (role === "creator" ? creatorApproved : true);
 
                 return (
                   <tr key={profile.id} className="hover:bg-secondary/20">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={resolveAvatar(null, safeId)} />
+                          <AvatarImage src={resolveAvatar(null, profile.id)} />
                           <AvatarFallback>{profile.display_name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -95,6 +97,13 @@ async function UsersContent() {
                   </tr>
                 );
               })}
+              {(!profiles || profiles.length === 0) && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    No users found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

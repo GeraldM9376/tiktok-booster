@@ -91,16 +91,29 @@ export async function signup(
       });
     }
 
-    // 2. Generate a referral code for this new user
+    // 2. Assign the role in user_roles (NEW)
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", profileType)
+      .single();
+
+    if (roleData) {
+      await supabase.from("user_roles").insert({
+        user_id: authData.user.id,
+        role_id: roleData.id,
+      });
+    }
+
+    // 3. Generate a referral code for this new user
     const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     await supabase.from("referral_codes").insert({
       user_id: authData.user.id,
       code: newRefCode,
     });
 
-    // 3. If they signed up with a referral code, record the referral
+    // 4. If they signed up with a referral code, record the referral
     if (data.ref) {
-      // Find the referrer by code
       const { data: referrerData } = await supabase
         .from("referral_codes")
         .select("user_id")
@@ -114,7 +127,6 @@ export async function signup(
           status: "pending",
         });
         
-        // Also update the earner/creator profile with the referred_by
         if (profileType === "earner") {
           await supabase.from("earner_profiles").update({ referred_by: referrerData.user_id }).eq("user_id", authData.user.id);
         } else {
