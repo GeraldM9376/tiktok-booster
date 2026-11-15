@@ -63,12 +63,12 @@ export function MarketplaceGrid({ creators, count, currentPage, totalPages, sear
             Page {currentPage} of {totalPages} ({count?.toLocaleString()} creators)
           </p>
           <div className="flex gap-2">
-            <Link href={`/earn/marketplace?page=${Math.max(1, currentPage - 1)}`}>
+            <Link href={`/earn/marketplace?page=${Math.max(1, currentPage - 1)}${searchQuery ? `&q=${searchQuery}` : ""}${nicheId ? `&niche=${nicheId}` : ""}`}>
               <Button variant="outline" size="sm" disabled={currentPage <= 1}>
                 <ChevronLeft className="h-4 w-4 mr-1" /> Previous
               </Button>
             </Link>
-            <Link href={`/earn/marketplace?page=${Math.min(totalPages, currentPage + 1)}`}>
+            <Link href={`/earn/marketplace?page=${Math.min(totalPages, currentPage + 1)}${searchQuery ? `&q=${searchQuery}` : ""}${nicheId ? `&niche=${nicheId}` : ""}`}>
               <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>
                 Next <ChevronRight className="h-4 w-4 ml-1" />
               </Button>

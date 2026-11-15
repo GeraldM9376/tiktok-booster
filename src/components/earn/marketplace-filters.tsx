@@ -5,15 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-export function MarketplaceFilters({ 
-  niches, 
-  searchQuery, 
-  nicheId 
-}: { 
-  niches: any[], 
-  searchQuery: string, 
-  nicheId: string 
-}) {
+export function MarketplaceFilters({ niches, searchQuery, nicheId }: any) {
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -34,7 +26,7 @@ export function MarketplaceFilters({
         <Link href="/earn/marketplace">
           <Badge variant={!nicheId ? "default" : "outline"} className="cursor-pointer">All Niches</Badge>
         </Link>
-        {niches?.map((niche) => (
+        {niches?.map((niche: any) => (
           <Link key={niche.id} href={`/earn/marketplace?niche=${niche.id}`}>
             <Badge variant={nicheId === niche.id.toString() ? "default" : "outline"} className="cursor-pointer">
               {niche.name}

@@ -24,7 +24,7 @@ async function MarketplaceContent({ searchParams }: { searchParams: Promise<{ pa
   const to = from + PAGE_SIZE - 1;
 
   const { data: creators, count, error } = await query.order("follower_count", { ascending: false }).range(from, to);
-  
+
   if (error) {
     return <div className="p-8 text-center text-red-500">Error loading creators: {error.message}</div>;
   }
