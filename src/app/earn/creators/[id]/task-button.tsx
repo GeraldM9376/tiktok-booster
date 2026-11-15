@@ -46,13 +46,13 @@ export function TaskButton({
   }, [targetId, type]);
 
   async function handleTask() {
-    // If NOT on the daily tasks page, redirect them there instead of earning
-    if (!isOnDailyTaskPage) {
+    // Redirect ONLY if it's a follow task AND we are NOT on the daily tasks page
+    if (type === "follow" && !isOnDailyTaskPage) {
       router.push("/earn/tasks/daily");
       return;
     }
-
-    // If they are on the daily tasks page, run the earning logic
+    
+    // Otherwise, run the earning logic
     if (completed || isLoading) return;
     setIsLoading(true);
 

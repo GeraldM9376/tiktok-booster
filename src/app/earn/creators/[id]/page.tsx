@@ -2,10 +2,10 @@
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, Heart } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 import { TaskButton } from "./task-button";
 
@@ -17,7 +17,9 @@ function stripEmojis(str: string) {
 async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/earn/auth");
+
   const { data: creator } = await supabase
     .from("creators")
     .select("*, niches(name)")
@@ -26,11 +28,33 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
     
   if (!creator) notFound();
 
+  // Fetch videos
   const { data: videos } = await supabase
     .from("videos")
     .select("*")
     .eq("creator_id", id);
 
+  // Fetch like limits and today's usage
+  const today = new Date().toISOString().split("T")[0];
+  
+  const { data: rankData } = await supabase
+    .from("user_ranks")
+    .select("rank_packages(name, daily_like_tasks)")
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  const likeLimit = (rankData?.rank_packages as any)?.daily_like_tasks || 0;
+  const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
+
+  const { count: likesDone } = await supabase
+    .from("completed_tasks")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("task_type", "like")
+    .eq("day_bucket", today);
+
+  const likesRemaining = Math.max(0, likeLimit - (likesDone || 0));
   const actualVideoCount = videos ? videos.length : 0;
   const safeId = creator.id || id;
   const safeUsername = creator.username ? String(creator.username) : null;
@@ -43,7 +67,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header with Follow Button */}
+      {/* Header */}
       <div className="glass rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
         <Avatar className="h-32 w-32 border-4 border-background">
           <AvatarImage src={resolveAvatar(creator.avatar_url, safeId)} />
@@ -66,9 +90,27 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
             <Badge variant="secondary">{nicheName}</Badge>
           </div>
         </div>
-        <div className="mt-6 md:mt-0">
-          <TaskButton targetId={creator.id} type="follow" />
+      </div>
+
+      {/* Likes Guide Banner */}
+      <div className="glass rounded-xl p-6 border border-primary/20 bg-primary/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+            Like Videos to Earn
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            You are on the <strong>{rankName}</strong> plan. You get {likeLimit} likes per day.
+          </p>
+          <p className="text-sm font-semibold mt-2">
+            Likes remaining today: <span className="text-primary">{likesRemaining}</span> / {likeLimit}
+          </p>
         </div>
+        {likesRemaining === 0 && (
+          <div className="text-sm text-orange-500 font-medium bg-orange-500/10 px-4 py-2 rounded-lg border border-orange-500/20">
+            You've reached your daily like limit. Upgrade your rank for more!
+          </div>
+        )}
       </div>
 
       {/* Video List */}
