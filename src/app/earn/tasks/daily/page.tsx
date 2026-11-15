@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskButton } from "../../creators/[id]/task-button";
 import { Loader2, Clock } from "lucide-react";
 import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
+import { CountdownTimer } from "@/components/earn/countdown-timer";
 
 function getNicheName(niches: any): string {
   if (!niches) return "Uncategorized";
@@ -48,7 +49,7 @@ async function DailyTasksContent() {
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
-    .limit(50); // Fetch a pool to choose from
+    .limit(50); 
 
   const tasks = (creators || [])
     .filter(c => !completedIds.includes(c.id))
@@ -90,7 +91,8 @@ async function DailyTasksContent() {
                     <p className="text-xs font-medium mt-1 text-primary">{getNicheName(creator.niches)}</p>
                   </div>
                   <div className="w-full pt-4 border-t">
-                    <TaskButton targetId={creator.id} type="follow" />
+                    {/* Added isOnDailyTaskPage={true} so this button awards points instead of redirecting */}
+                    <TaskButton targetId={creator.id} type="follow" isOnDailyTaskPage={true} />
                   </div>
                 </CardContent>
               </Card>
@@ -107,8 +109,6 @@ async function DailyTasksContent() {
     </div>
   );
 }
-
-import { CountdownTimer } from "@/components/earn/countdown-timer";
 
 export default function DailyTasksPage() {
   return (

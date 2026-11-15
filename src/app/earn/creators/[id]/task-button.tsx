@@ -6,10 +6,20 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Heart, UserPlus, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function TaskButton({ targetId, type }: { targetId: string; type: "follow" | "like" }) {
+export function TaskButton({ 
+  targetId, 
+  type, 
+  isOnDailyTaskPage = false 
+}: { 
+  targetId: string; 
+  type: "follow" | "like"; 
+  isOnDailyTaskPage?: boolean;
+}) {
+  const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
 
@@ -35,9 +45,39 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
     checkStatus();
   }, [targetId, type]);
 
-  function handleRedirect() {
-    // Redirect to the daily tasks page to actually earn the points
-    router.push("/earn/tasks/daily");
+  async function handleTask() {
+    // If NOT on the daily tasks page, redirect them there instead of earning
+    if (!isOnDailyTaskPage) {
+      router.push("/earn/tasks/daily");
+      return;
+    }
+
+    // If they are on the daily tasks page, run the earning logic
+    if (completed || isLoading) return;
+    setIsLoading(true);
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("You must be logged in.");
+      setIsLoading(false);
+      return;
+    }
+
+    const reward = type === "follow" ? 10 : 1;
+    const result = await completeTask(user.id, type, targetId, reward);
+
+    if (result.error) {
+      toast.error(result.error);
+      if (result.error.includes("active rank")) {
+        router.push("/earn/rank");
+      }
+    } else {
+      setCompleted(true);
+      toast.success(`Thank you! +${reward} credits added to your wallet.`);
+      router.refresh();
+    }
+    setIsLoading(false);
   }
 
   if (type === "follow") {
@@ -51,7 +91,7 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
             <Check className="mr-2 h-4 w-4" /> Followed
           </Button>
           <Button asChild variant="default" className="shadow-glow">
-            <a href={`/earn/tasks/daily`}>
+            <a href={`/earn/creators/${targetId}`}>
               Earn More <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </Button>
@@ -61,26 +101,26 @@ export function TaskButton({ targetId, type }: { targetId: string; type: "follow
 
     return (
       <Button
-        onClick={handleRedirect}
+        onClick={handleTask}
+        disabled={isLoading}
         className="w-full shadow-glow"
       >
-        <UserPlus className="mr-2 h-4 w-4" /> Follow (+10)
+        {isLoading ? "Processing..." : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
       </Button>
     );
   }
 
-  // Render Like Button (Heart)
+  // Like Button (Heart)
   return (
     <motion.button
       whileTap={{ scale: 0.8 }}
-      onClick={handleRedirect}
-      disabled={completed}
+      onClick={handleTask}
+      disabled={completed || isLoading}
       className={`p-2 rounded-full transition-colors ${
         completed 
           ? "text-red-500 bg-red-500/10" 
           : "text-green-500 hover:bg-green-500/10"
       }`}
-      title={completed ? "Liked" : "Like (+1)"}
     >
       <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
     </motion.button>
