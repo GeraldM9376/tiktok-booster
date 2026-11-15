@@ -11,7 +11,8 @@ export async function completeTask(
   rewardAmount: number
 ) {
   const supabase = await createClient();
-  const today = new Date().toISOString().split("T")[0];
+  const { data: { local_date } } = await supabase.rpc("get_local_date");
+  const today = local_date || new Date().toISOString().split("T")[0];
 
   // 1. Check if user has an active rank
   const { data: rankData } = await supabase

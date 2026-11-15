@@ -26,7 +26,8 @@ async function DailyTasksContent() {
   if (!user) redirect("/earn/auth");
 
   // Use local time for "today" to match the user's midnight
-  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  const { data: { local_date } } = await supabase.rpc("get_local_date");
+  const today = local_date || new Date().toLocaleDateString("en-CA");// YYYY-MM-DD format
 
   // 1. Get rank limit
   const { data: rankData } = await supabase

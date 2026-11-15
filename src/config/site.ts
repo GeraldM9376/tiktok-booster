@@ -5,7 +5,7 @@ export const site = {
   tagline: "Boost your creator journey. Grow faster. Earn more.",
   description:
     "TikTok Booster helps creators grow their presence and earn rewards through structured engagement and campaign tools.",
-  url: "https://tiktok-booster.vercel.app",
+  url: "https://tiktok-booster-orpin.vercel.app",
   links: {
     github: "https://github.com",
     support: "mailto:support@tiktok-booster.example",
@@ -37,8 +37,8 @@ export const site = {
       { label: "Overview", href: "/admin/dashboard" },
       { label: "Users", href: "/admin/users" },
       { label: "Rank Approvals", href: "/admin/ranks" },
-      { label: "Referrals", href: "/admin/referrals" }, // NEW
-      { label: "Transactions", href: "/admin/transactions" }, // NEW
+      { label: "Referrals", href: "/admin/referrals" },
+      { label: "Transactions", href: "/admin/transactions" },
       { label: "Top-Ups", href: "/admin/topups" },
       { label: "Withdrawals", href: "/admin/withdrawals" },
       { label: "Audit", href: "/admin/audit" },

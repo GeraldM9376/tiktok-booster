@@ -5,8 +5,9 @@ import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Loader2, AlertCircle } from "lucide-react";
 import { WithdrawalForm } from "./withdrawal-form";
-import { Loader2 } from "lucide-react";
+import { PaymentSettingsForm } from "./payment-settings-form";
 
 async function EarningsContent() {
   const supabase = await createClient();
@@ -19,21 +20,13 @@ async function EarningsContent() {
     .eq("user_id", user.id)
     .single();
 
-  // Use service role to bypass RLS for this read, to prove data exists
-  const { createClient: createSupabase } = await import("@supabase/supabase-js");
-  const adminClient = createSupabase(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-
-  const { data: profile } = await adminClient
+  const { data: profile } = await supabase
     .from("earner_profiles")
     .select("payment_details")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  console.log("PROFILE FETCHED:", profile);
+  const hasDetails = !!profile?.payment_details;
 
   const { data: rankData } = await supabase
     .from("user_ranks")
@@ -60,11 +53,24 @@ async function EarningsContent() {
         </p>
       </div>
 
+      {!hasDetails && (
+        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="font-semibold">You must set up payment details before you can withdraw.</p>
+          </div>
+          <div className="bg-background rounded-lg p-4 border border-orange-500/20">
+            <h3 className="text-sm font-bold mb-4 text-foreground">Payment Details Setup</h3>
+            <PaymentSettingsForm initialDetails={null} />
+          </div>
+        </div>
+      )}
+
       <WithdrawalForm 
         availableBalance={wallet?.available_balance || 0}
         qualifiedReferrals={qualifiedReferrals || 0}
         requiredReferrals={requiredReferrals}
-        hasPaymentDetails={!!profile?.payment_details}
+        hasPaymentDetails={hasDetails}
       />
     </div>
   );
