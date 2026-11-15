@@ -35,7 +35,14 @@ async function DailyTasksContent() {
   const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
   const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
 
-  // 2. Get today's completed tasks
+  // 2. Fetch a pool of creators (We will NOT filter out completed ones here)
+  const { data: creators } = await supabase
+    .from("creators")
+    .select("*, niches(name)")
+    .order("follower_count", { ascending: false })
+    .limit(followLimit); 
+
+  // 3. Get the completed IDs to check status on the client
   const { data: completed } = await supabase
     .from("completed_tasks")
     .select("target_id")
@@ -44,16 +51,7 @@ async function DailyTasksContent() {
     .eq("day_bucket", today);
 
   const completedIds = completed?.map(c => c.target_id) || [];
-
-  // 3. Fetch creators not yet followed today, up to the daily limit
-  const { data: creators } = await supabase
-    .from("creators")
-    .select("*, niches(name)")
-    .limit(50); 
-
-  const tasks = (creators || [])
-    .filter(c => !completedIds.includes(c.id))
-    .slice(0, followLimit);
+  const allDone = completedIds.length >= followLimit;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -73,10 +71,16 @@ async function DailyTasksContent() {
         </div>
       </div>
 
+      {allDone && (
+        <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500">
+          🎉 You have completed all your follow tasks for today! Click "Earn More" on any card to like their videos.
+        </div>
+      )}
+
       <div>
-        {tasks.length > 0 ? (
+        {creators && creators.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {tasks.map((creator) => (
+            {creators.map((creator) => (
               <Card key={creator.id} className="glass overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                   <Avatar className="h-20 w-20">
@@ -91,7 +95,7 @@ async function DailyTasksContent() {
                     <p className="text-xs font-medium mt-1 text-primary">{getNicheName(creator.niches)}</p>
                   </div>
                   <div className="w-full pt-4 border-t">
-                    {/* Added isOnDailyTaskPage={true} so this button awards points instead of redirecting */}
+                    {/* Pass the task button with the daily page flag */}
                     <TaskButton targetId={creator.id} type="follow" isOnDailyTaskPage={true} />
                   </div>
                 </CardContent>
@@ -100,9 +104,8 @@ async function DailyTasksContent() {
           </div>
         ) : (
           <div className="glass rounded-xl p-12 text-center">
-            <h2 className="text-xl font-bold mb-2">All caught up! 🎉</h2>
-            <p className="text-muted-foreground">You've completed your daily follow limit. Come back tomorrow!</p>
-            <Link href="/earn/marketplace" className="inline-block mt-4 text-primary hover:underline font-medium">Browse the Marketplace for Likes</Link>
+            <h2 className="text-xl font-bold mb-2">No tasks available</h2>
+            <p className="text-muted-foreground">Please check back later.</p>
           </div>
         )}
       </div>
