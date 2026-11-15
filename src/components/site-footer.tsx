@@ -5,6 +5,7 @@ import Link from "next/link";
 import { site } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/brand/logo";
 
 export function SiteFooter() {
   const [year, setYear] = useState<number | null>(null);
@@ -18,9 +19,9 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-md">
-            <p className="text-sm font-semibold">
-              <span className="text-gradient">{site.name}</span>
-            </p>
+            <div className="mb-2">
+              <Logo />
+            </div>
             <p className="mt-2 text-xs text-muted-foreground">{site.tagline}</p>
           </div>
 

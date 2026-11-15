@@ -3,18 +3,24 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { site } from "@/config/site";
+import { Logo } from "@/components/brand/logo";
 
 export default function Page() {
   return (
     <section className="bg-aurora relative flex min-h-[calc(100dvh-12rem)] items-center justify-center overflow-hidden px-6 py-20">
       <div className="mx-auto w-full max-w-3xl text-center">
-        <div className="glass mx-auto mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs text-muted-foreground">
+        
+        <div className="glass mx-auto mb-8 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
           {site.name} — Creator Growth Platform
         </div>
 
-        <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-7xl">
-          <span className="text-gradient">{site.name}</span>
+        <div className="mb-10 flex justify-center">
+          <Logo className="scale-150" />
+        </div>
+
+        <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-6xl">
+          <span className="text-gradient">Turn your creator journey into something bigger.</span>
         </h1>
 
         <p className="mt-4 text-lg text-muted-foreground md:text-xl">{site.tagline}</p>

@@ -30,6 +30,7 @@ import {
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth/actions";
+import { Logo } from "@/components/brand/logo";
 
 type SidebarType = "earner" | "creator" | "admin";
 
@@ -83,9 +84,9 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
     <>
       <div className="flex h-16 items-center justify-between px-4">
         {(!collapsed || isOpen) && (
-          <Link href="/" className="text-lg font-bold tracking-tight" onClick={onClose}>
-            <span className="text-gradient">{site.name}</span>
-          </Link>
+          <div onClick={onClose}>
+            <Logo collapsed={collapsed} />
+          </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -170,7 +171,6 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 72 : 256 }}
@@ -180,7 +180,6 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
         {sidebarContent}
       </motion.aside>
 
-      {/* Mobile Sidebar (Overlay) */}
       <AnimatePresence>
         {isOpen && (
           <>
