@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { resolveAvatar } from "@/lib/utils";
+import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
@@ -64,11 +64,14 @@ async function MarketplaceContent({ searchParams }: { searchParams: Promise<{ pa
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar className="h-12 w-12 border border-border">
                     <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
-                    <AvatarFallback>{creator.display_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{getRealName(creator.id).slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="overflow-hidden">
-                    <p className="font-semibold truncate flex items-center gap-1">{creator.display_name}{creator.verified && <span className="text-primary text-xs">✓</span>}</p>
-                    <p className="text-xs text-muted-foreground truncate">@{creator.username}</p>
+                    <p className="font-semibold truncate flex items-center gap-1">
+                      {getRealName(creator.id)}
+                      {creator.verified && <span className="text-primary text-xs">✓</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">@{getRealUsername(creator.id, creator.username)}</p>
                   </div>
                 </div>
                 <div className="mt-auto grid grid-cols-2 gap-2 text-xs">

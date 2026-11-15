@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskButton } from "../../creators/[id]/task-button";
 import { Loader2 } from "lucide-react";
-import { resolveAvatar } from "@/lib/utils";
+import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
 async function DailyTasksContent() {
   const supabase = await createClient();
@@ -48,11 +48,13 @@ async function DailyTasksContent() {
               <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
-                  <AvatarFallback>{creator.display_name.slice(0, 2)}</AvatarFallback>
+                  <AvatarFallback>{getRealName(creator.id).slice(0, 2)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <Link href={`/earn/creators/${creator.id}`} className="font-bold hover:underline">{creator.display_name}</Link>
-                  <p className="text-xs text-muted-foreground">@{creator.username}</p>
+                  <Link href={`/earn/creators/${creator.id}`} className="font-bold hover:underline">
+                    {getRealName(creator.id)}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">@{getRealUsername(creator.id, creator.username)}</p>
                   <p className="text-xs font-medium mt-1 text-primary">{(creator.niches as any)?.name}</p>
                 </div>
                 <div className="w-full pt-4 border-t">

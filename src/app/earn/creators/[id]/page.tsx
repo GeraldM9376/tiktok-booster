@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TaskButton } from "./task-button";
 import { Loader2 } from "lucide-react";
-import { resolveAvatar } from "@/lib/utils";
+import { resolveAvatar, getRealName, getRealUsername } from "@/lib/utils";
 
 async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,11 +22,14 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
       <div className="glass rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
         <Avatar className="h-32 w-32 border-4 border-background">
           <AvatarImage src={resolveAvatar(creator.avatar_url, creator.username)} />
-          <AvatarFallback className="text-4xl">{creator.display_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="text-4xl">{getRealName(creator.id).slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">{creator.display_name}{creator.verified && <span className="text-primary text-xl">✓</span>}</h1>
-          <p className="text-muted-foreground">@{creator.username}</p>
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
+            {getRealName(creator.id)}
+            {creator.verified && <span className="text-primary text-xl">✓</span>}
+          </h1>
+          <p className="text-muted-foreground">@{getRealUsername(creator.id, creator.username)}</p>
           <p className="mt-4 max-w-xl text-sm">{creator.bio}</p>
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
             <div><p className="text-2xl font-bold">{creator.follower_count.toLocaleString()}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Followers</p></div>
