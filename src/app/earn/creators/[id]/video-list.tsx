@@ -1,7 +1,6 @@
 // src/app/earn/creators/[id]/video-list.tsx
 "use client";
 
-import { useState } from "react";
 import { TaskButton } from "./task-button";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,26 +10,15 @@ function stripEmojis(str: string) {
 }
 
 export function VideoList({ videos }: { videos: any[] }) {
-  // We keep a local state of likes to update them instantly
-  const [localVideos, setLocalVideos] = useState(videos);
-
-  const handleLikeComplete = (videoId: string) => {
-    setLocalVideos((prev) => 
-      prev.map((v) => 
-        v.id === videoId ? { ...v, like_count: v.like_count + 1 } : v
-      )
-    );
-  };
-
   return (
     <div>
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        Videos <Badge variant="secondary">{localVideos.length}</Badge>
+        Videos <Badge variant="secondary">{videos.length}</Badge>
       </h2>
       
       <div className="glass rounded-xl overflow-hidden">
         <div className="divide-y divide-border max-h-[800px] overflow-y-auto">
-          {localVideos.map((video) => {
+          {videos.map((video) => {
             const cleanTitle = stripEmojis(video.title);
             const fakeUrl = `tiktok.com/@user/video/${video.id.slice(0, 8)}...`;
             
@@ -46,17 +34,13 @@ export function VideoList({ videos }: { videos: any[] }) {
                     <p className="text-[10px] uppercase">Views</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-foreground transition-all duration-300">
+                    <p className="font-semibold text-foreground">
                       {video.like_count.toLocaleString()}
                     </p>
                     <p className="text-[10px] uppercase">Likes</p>
                   </div>
                   <div className="pl-4 border-l border-border">
-                    <TaskButton 
-                      targetId={video.id} 
-                      type="like" 
-                      onComplete={() => handleLikeComplete(video.id)} 
-                    />
+                    <TaskButton targetId={video.id} type="like" />
                   </div>
                 </div>
               </div>
