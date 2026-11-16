@@ -1,6 +1,6 @@
 // src/app/earn/help/page.tsx
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Mail, BookOpen, MessageCircle } from "lucide-react";
 
 export default function EarnHelpPage() {

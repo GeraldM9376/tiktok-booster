@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Heart, UserPlus, Check, ArrowRight, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Heart, UserPlus, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,11 @@ import { createClient } from "@/lib/supabase/client";
 export function TaskButton({ 
   targetId, 
   type, 
-  isOnDailyTaskPage = false,
-  onComplete
+  isOnDailyTaskPage = false 
 }: { 
   targetId: string; 
   type: "follow" | "like"; 
   isOnDailyTaskPage?: boolean;
-  onComplete?: () => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -31,7 +29,9 @@ export function TaskButton({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const today = new Date().toISOString().split("T")[0];
+      const { data: todayData } = await supabase.rpc("get_local_date");
+      const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+      
       const { data } = await supabase
         .from("completed_tasks")
         .select("id")
@@ -47,23 +47,25 @@ export function TaskButton({
   }, [targetId, type]);
 
   async function handleTask() {
+    // If it's a follow and NOT on daily page → redirect to daily tasks
     if (type === "follow" && !isOnDailyTaskPage) {
+      router.push("/earn/tasks/daily");
+      return;
+    }
+
+    // If it's a like and NOT on daily page → redirect to daily tasks
+    if (type === "like" && !isOnDailyTaskPage) {
       router.push("/earn/tasks/daily");
       return;
     }
     
     if (completed || isLoading) return;
-    
-    // 1. Instantly update UI (Optimistic)
-    setCompleted(true);
     setIsLoading(true);
-    if (onComplete) onComplete(); // Update parent counter instantly
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast.error("You must be logged in.");
-      setCompleted(false);
       setIsLoading(false);
       return;
     }
@@ -73,55 +75,46 @@ export function TaskButton({
 
     if (result.error) {
       toast.error(result.error);
-      setCompleted(false); // Revert UI on failure
       if (result.error.includes("active rank")) {
         router.push("/earn/rank");
       }
     } else {
-      toast.success(`+${reward} credits earned!`, {
-        icon: type === "like" ? "❤️" : "👤",
-      });
-      router.refresh(); // Refresh background data without reloading
+      setCompleted(true);
+      toast.success(`Thank you! +${reward} credits added to your wallet.`);
+      router.refresh();
     }
     setIsLoading(false);
   }
 
   if (type === "follow") {
+    if (completed) {
+      return (
+        <div className="flex items-center gap-2 w-full">
+          <Button
+            disabled
+            className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/20"
+          >
+            <Check className="mr-2 h-4 w-4" /> Followed
+          </Button>
+          <Button asChild variant="default" className="shadow-glow">
+            <a href={`/earn/creators/${targetId}`}>
+              Earn More <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full">
-        <AnimatePresence mode="wait">
-          {completed ? (
-            <motion.div 
-              key="followed"
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 w-full"
-            >
-              <Button disabled className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50">
-                <Check className="mr-2 h-4 w-4" /> Followed
-              </Button>
-              <Button asChild variant="default" className="shadow-glow">
-                <a href={`/earn/creators/${targetId}`}>
-                  Earn More <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.div key="follow" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Button onClick={handleTask} disabled={isLoading} className="w-full shadow-glow">
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <Button onClick={handleTask} disabled={isLoading} className="w-full shadow-glow">
+        {isLoading ? "Processing..." : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
+      </Button>
     );
   }
 
-  // Like Button (Heart)
   return (
     <motion.button
-      whileTap={{ scale: 0.7 }}
+      whileTap={{ scale: 0.8 }}
       onClick={handleTask}
       disabled={completed || isLoading}
       className={`p-2 rounded-full transition-colors ${
@@ -130,12 +123,7 @@ export function TaskButton({
           : "text-green-500 hover:bg-green-500/10"
       }`}
     >
-      <motion.div
-        animate={completed ? { scale: [1, 1.5, 1] } : {}}
-        transition={{ duration: 0.3 }}
-      >
-        <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
-      </motion.div>
+      <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
     </motion.button>
   );
 }

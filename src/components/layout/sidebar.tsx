@@ -41,6 +41,8 @@ const ICONS: Record<string, React.ElementType> = {
   "/earn/earnings": Wallet,
   "/earn/rank": Trophy,
   "/earn/referral": Gift,
+  "/earn/payment-settings": Settings,
+  "/earn/help": HelpCircle,
   "/creator/dashboard": LayoutDashboard,
   "/creator/videos": Video,
   "/creator/campaigns": Megaphone,
@@ -70,15 +72,6 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
       : type === "creator"
         ? site.nav.creator
         : site.nav.admin;
-
-  const bottomLinks = [
-    { label: "Help Centre", href: `/${type}/help`, icon: HelpCircle },
-    { label: "Settings", href: `/${type}/settings`, icon: Settings },
-  ];
-
-  if (type === "admin") {
-    bottomLinks[0] = { label: "System Settings", href: "/admin/settings", icon: Settings };
-  }
 
   const sidebarContent = (
     <>
@@ -131,28 +124,21 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
 
       <div className="border-t border-sidebar-border p-2">
         <ul className="space-y-1">
-          {bottomLinks.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-sidebar-accent text-sidebar-foreground"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-          
+          <li>
+            <Link
+              href={`/${type}/help`}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                pathname === `/${type}/help`
+                  ? "bg-sidebar-accent text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              )}
+            >
+              <HelpCircle className="h-4 w-4 shrink-0" />
+              <span>Help Centre</span>
+            </Link>
+          </li>
           <li>
             <form action={signOut}>
               <button
