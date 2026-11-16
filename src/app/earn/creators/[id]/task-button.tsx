@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Heart, UserPlus, Check, ArrowRight } from "lucide-react";
+import { Heart, UserPlus, Check, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,10 @@ export function TaskButton({
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
 
+  // Optimistic check on mount
   useEffect(() => {
+    let isMounted = true;
+
     async function checkStatus() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,31 +44,35 @@ export function TaskButton({
         .eq("day_bucket", today)
         .maybeSingle();
 
-      if (data) setCompleted(true);
+      if (isMounted && data) setCompleted(true);
     }
     checkStatus();
+
+    return () => { isMounted = false; };
   }, [targetId, type]);
 
   async function handleTask() {
-    // If it's a follow and NOT on daily page → redirect to daily tasks
     if (type === "follow" && !isOnDailyTaskPage) {
       router.push("/earn/tasks/daily");
       return;
     }
 
-    // If it's a like and NOT on daily page → redirect to daily tasks
     if (type === "like" && !isOnDailyTaskPage) {
       router.push("/earn/tasks/daily");
       return;
     }
     
     if (completed || isLoading) return;
+    
+    // 1. Instant UI update (Optimistic)
+    setCompleted(true);
     setIsLoading(true);
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast.error("You must be logged in.");
+      setCompleted(false);
       setIsLoading(false);
       return;
     }
@@ -75,13 +82,13 @@ export function TaskButton({
 
     if (result.error) {
       toast.error(result.error);
+      setCompleted(false); // Revert on failure
       if (result.error.includes("active rank")) {
         router.push("/earn/rank");
       }
     } else {
-      setCompleted(true);
-      toast.success(`Thank you! +${reward} credits added to your wallet.`);
-      router.refresh();
+      toast.success(`Thank you! +${reward} credits added.`);
+      router.refresh(); // Background refresh to update the numbers
     }
     setIsLoading(false);
   }
@@ -107,7 +114,7 @@ export function TaskButton({
 
     return (
       <Button onClick={handleTask} disabled={isLoading} className="w-full shadow-glow">
-        {isLoading ? "Processing..." : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
       </Button>
     );
   }
@@ -123,7 +130,12 @@ export function TaskButton({
           : "text-green-500 hover:bg-green-500/10"
       }`}
     >
-      <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
+      <motion.div
+        animate={completed ? { scale: [1, 1.4, 1] } : {}}
+        transition={{ duration: 0.3 }}
+      >
+        <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
+      </motion.div>
     </motion.button>
   );
 }

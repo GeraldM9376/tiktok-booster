@@ -38,21 +38,31 @@ async function ReferralContent() {
 
   const referralLink = `${site.url}/earn/auth?ref=${finalCode}`;
 
+  // Fetch referrals with their reward amounts
   const { data: referrals } = await supabase
     .from("referrals")
-    .select("*, profiles:referred_id(email, display_name)")
+    .select(`
+      *,
+      profiles:referred_id(email, display_name),
+      referral_rewards(amount)
+    `)
     .eq("referrer_id", user.id)
     .order("created_at", { ascending: false });
 
   const qualified = referrals?.filter(r => r.status === "approved").length || 0;
   const pending = referrals?.filter(r => r.status === "pending").length || 0;
 
+  const totalEarned = referrals?.reduce((sum, r) => {
+    const rewards = Array.isArray(r.referral_rewards) ? r.referral_rewards : [];
+    return sum + rewards.reduce((s: number, rw: any) => s + (rw.amount || 0), 0);
+  }, 0) || 0;
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Referral Program</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Invite friends to earn credits and unlock withdrawal limits.
+          Invite friends to earn 20% of their rank purchase.
         </p>
       </div>
 
@@ -70,18 +80,22 @@ async function ReferralContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-3xl font-bold">{referrals?.length || 0}</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Total Referred</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1">Total</p>
         </div>
         <div className="glass rounded-xl p-4 text-center border-orange-500/30">
           <p className="text-3xl font-bold text-orange-500">{pending}</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Pending</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1">Pending</p>
         </div>
         <div className="glass rounded-xl p-4 text-center border-green-500/30">
           <p className="text-3xl font-bold text-green-500">{qualified}</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Qualified</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1">Qualified</p>
+        </div>
+        <div className="glass rounded-xl p-4 text-center border-primary/30">
+          <p className="text-3xl font-bold text-primary">{totalEarned.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1">Credits Earned</p>
         </div>
       </div>
 
@@ -93,22 +107,28 @@ async function ReferralContent() {
               <tr>
                 <th className="px-4 py-3 font-medium">User</th>
                 <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Commission</th>
                 <th className="px-4 py-3 font-medium text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {referrals?.map((ref) => (
-                <tr key={ref.id}>
-                  <td className="px-4 py-3">{(ref.profiles as any)?.display_name || (ref.profiles as any)?.email || "Anonymous"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{new Date(ref.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Badge variant={ref.status === "approved" ? "default" : "secondary"}>{ref.status}</Badge>
-                  </td>
-                </tr>
-              ))}
+              {referrals?.map((ref) => {
+                const rewards = Array.isArray(ref.referral_rewards) ? ref.referral_rewards : [];
+                const earned = rewards.reduce((s: number, rw: any) => s + (rw.amount || 0), 0);
+                return (
+                  <tr key={ref.id}>
+                    <td className="px-4 py-3">{(ref.profiles as any)?.display_name || (ref.profiles as any)?.email || "Anonymous"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{new Date(ref.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 font-semibold text-primary">{earned > 0 ? `+${earned.toLocaleString()}` : "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Badge variant={ref.status === "approved" ? "default" : "secondary"}>{ref.status}</Badge>
+                    </td>
+                  </tr>
+                );
+              })}
               {(!referrals || referrals.length === 0) && (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                     No referrals yet. Share your link to get started!
                   </td>
                 </tr>

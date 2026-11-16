@@ -18,7 +18,7 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // 1. Update user_ranks status
+    // 1. Update the rank status
     const { error: updateError } = await supabase
       .from("user_ranks")
       .update({ status, approved_by: user.id, approved_at: new Date().toISOString() })
@@ -30,9 +30,8 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
       return;
     }
 
-    // 2. If approved, award referral commission
+    // 2. If approved, award the 20% commission to the referrer
     if (status === "approved") {
-      // Get the price of the rank
       const { data: rankData } = await supabase
         .from("user_ranks")
         .select("rank_packages(tier_value)")
@@ -42,7 +41,6 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
       const price = (rankData?.rank_packages as any)?.tier_value || 0;
 
       if (price > 0) {
-        // Call our secure function
         await supabase.rpc("award_referral_commission", {
           referred_user_id: userId,
           rank_price: price,

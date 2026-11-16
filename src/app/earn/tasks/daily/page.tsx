@@ -25,7 +25,6 @@ async function DailyTasksContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
-  // Kenya time for today
   const { data: todayData } = await supabase.rpc("get_local_date");
   const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
 
@@ -39,21 +38,10 @@ async function DailyTasksContent() {
   const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
   const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
 
-  // Fetch creators fresh every day (shuffle based on today's date)
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
-    .limit(50);
-
-  // Shuffle deterministically by today's date
-  const dailySeed = today.replace(/-/g, "").slice(2);
-  const shuffledCreators = (creators || [])
-    .sort((a, b) => {
-      const hashA = (parseInt(dailySeed) + a.id.charCodeAt(0)) % 1000;
-      const hashB = (parseInt(dailySeed) + b.id.charCodeAt(0)) % 1000;
-      return hashA - hashB;
-    })
-    .slice(0, followLimit);
+    .limit(50); 
 
   const { data: completed } = await supabase
     .from("completed_tasks")
@@ -64,6 +52,16 @@ async function DailyTasksContent() {
 
   const completedIds = completed?.map(c => c.target_id) || [];
   const allDone = completedIds.length >= followLimit;
+
+  // Shuffle creators with today's seed
+  const dailySeed = today.replace(/-/g, "").slice(2);
+  const shuffled = (creators || [])
+    .sort((a, b) => {
+      const hashA = (parseInt(dailySeed) + a.id.charCodeAt(0)) % 1000;
+      const hashB = (parseInt(dailySeed) + b.id.charCodeAt(0)) % 1000;
+      return hashA - hashB;
+    })
+    .slice(0, followLimit);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -85,14 +83,14 @@ async function DailyTasksContent() {
 
       {allDone && (
         <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500">
-          🎉 You have completed all your follow tasks for today! Click "Earn More" on any card to like their videos.
+          🎉 All follow tasks done for today! Click "Earn More" to like videos.
         </div>
       )}
 
       <div>
-        {shuffledCreators.length > 0 ? (
+        {shuffled.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {shuffledCreators.map((creator) => (
+            {shuffled.map((creator) => (
               <Card key={creator.id} className="glass overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                   <Avatar className="h-20 w-20">
