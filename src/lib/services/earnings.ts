@@ -18,8 +18,19 @@ export async function getEarnerDashboardData(userId: string) {
     .eq("user_id", userId)
     .maybeSingle();
 
-  const { data: todayData } = await supabase.rpc("get_local_date");
-  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+  // Get local date safely
+  const { data: todayData, error: dateError } = await supabase.rpc("get_local_date");
+  const today = !dateError && todayData 
+    ? todayData 
+    : new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // Get today's stats from user_daily_statistics
+  const { data: todayStats } = await supabase
+    .from("user_daily_statistics")
+    .select("earnings, tasks_completed, follows_completed, likes_completed")
+    .eq("user_id", userId)
+    .eq("day", today)
+    .maybeSingle();
 
   const { count: tasksToday } = await supabase
     .from("completed_tasks")
@@ -32,6 +43,7 @@ export async function getEarnerDashboardData(userId: string) {
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId);
 
+  // Last 7 days chart
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -62,6 +74,7 @@ export async function getEarnerDashboardData(userId: string) {
     rank: (rankData?.rank_packages as any) || null,
     tasksToday: tasksToday ?? 0,
     tasksTotal: tasksTotal ?? 0,
+    todayEarnings: todayStats?.earnings || 0,
     dailyData,
   };
 }

@@ -40,7 +40,7 @@ export function VideoList({ videos }: { videos: any[] }) {
                     <p className="text-[10px] uppercase">Likes</p>
                   </div>
                   <div className="pl-4 border-l border-border">
-                    <TaskButton targetId={video.id} type="like" />
+                    <TaskButton targetId={video.id} type="like" isOnDailyTaskPage={true} />
                   </div>
                 </div>
               </div>

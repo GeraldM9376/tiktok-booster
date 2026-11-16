@@ -17,19 +17,6 @@ async function DashboardContent() {
 
   const data = await getEarnerDashboardData(user.id);
 
-  const { data: todayData } = await supabase.rpc("get_local_date");
-  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
-
-  const { data: todayStats } = await supabase
-    .from("user_daily_statistics")
-    .select("earnings, tasks_completed")
-    .eq("user_id", user.id)
-    .eq("day", today)
-    .maybeSingle();
-
-  const todayEarnings = todayStats?.earnings || 0;
-  const todayTasks = todayStats?.tasks_completed || 0;
-
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div>
@@ -49,7 +36,7 @@ async function DashboardContent() {
         <StatCard
           icon={<TrendingUp className="h-4 w-4 text-emerald-400" />}
           label="Today's Earnings"
-          value={todayEarnings.toLocaleString()}
+          value={data.todayEarnings.toLocaleString()}
           sub="credits today"
         />
         <StatCard
