@@ -85,7 +85,7 @@ async function RanksContent() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     {req.status === "pending" ? (
-                      <RankActions requestId={req.user_id} userId={req.user_id} />
+                      <RankActions requestId={req.user_id} />
                     ) : (
                       <span className="text-xs text-muted-foreground">Processed</span>
                     )}

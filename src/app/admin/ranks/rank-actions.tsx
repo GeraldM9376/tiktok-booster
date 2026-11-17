@@ -1,4 +1,4 @@
-// src/app/admin/ranks/rank-actions.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -8,77 +8,94 @@ import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function RankActions({ requestId, userId }: { requestId: string; userId: string }) {
+export function RankActions({
+  requestId,
+}: {
+  requestId: string;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  async function handleAction(status: "approved" | "rejected") {
+  async function handleAction(action: "approved" | "rejected") {
+    if (isLoading) return;
+
+    const confirmed = window.confirm(
+      action === "approved"
+        ? "Approve this rank purchase and process its referral commission?"
+        : "Reject this rank purchase?"
+    );
+
+    if (!confirmed) return;
+
     setIsLoading(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("Not authenticated");
-      setIsLoading(false);
-      return;
-    }
 
-    // 1. Update the rank status
-    const { error: updateError } = await supabase
-      .from("user_ranks")
-      .update({ status, approved_by: user.id, approved_at: new Date().toISOString() })
-      .eq("user_id", userId);
+    try {
+      const supabase = createClient();
 
-    if (updateError) {
-      toast.error(updateError.message);
-      setIsLoading(false);
-      return;
-    }
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-    // 2. If approved, award the 20% commission to the referrer
-    if (status === "approved") {
-      const { data: rankData } = await supabase
-        .from("user_ranks")
-        .select("rank_packages(tier_value)")
-        .eq("user_id", userId)
-        .single();
-
-      const price = (rankData?.rank_packages as any)?.tier_value || 0;
-
-      if (price > 0) {
-        const { error: rpcError } = await supabase.rpc("award_referral_commission", {
-          referred_user_id: userId,
-          rank_price: price,
-        });
-
-        if (rpcError) {
-          toast.error(`Commission error: ${rpcError.message}`);
-        }
+      if (authError || !user) {
+        toast.error("Not authenticated.");
+        return;
       }
-    }
 
-    toast.success(`Rank ${status}!`);
-    router.refresh();
-    setIsLoading(false);
+      const { error } = await supabase.rpc("process_rank_request", {
+        p_user_id: requestId,
+        p_action: action,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success(
+        action === "approved"
+          ? "Rank approved and referral commission processed."
+          : "Rank request rejected."
+      );
+
+      router.refresh();
+    } catch (error) {
+      console.error("Rank processing error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Button 
-        size="sm" 
-        variant="outline" 
-        className="text-red-500 hover:text-red-600" 
-        onClick={() => handleAction("rejected")} 
+      <Button
+        size="sm"
+        variant="outline"
+        className="text-red-500 hover:text-red-600"
+        onClick={() => handleAction("rejected")}
         disabled={isLoading}
+        title="Reject rank"
       >
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <X className="h-4 w-4" />
+        )}
       </Button>
-      <Button 
-        size="sm" 
-        className="text-green-500 hover:text-green-600" 
-        onClick={() => handleAction("approved")} 
+
+      <Button
+        size="sm"
+        className="text-green-500 hover:text-green-600"
+        onClick={() => handleAction("approved")}
         disabled={isLoading}
+        title="Approve rank"
       >
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Check className="h-4 w-4" />
+        )}
       </Button>
     </div>
   );

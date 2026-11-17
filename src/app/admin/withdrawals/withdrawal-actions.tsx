@@ -1,66 +1,118 @@
-// src/app/admin/withdrawals/withdrawal-actions.tsx
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function WithdrawalActions({ requestId, userId, amount }: { requestId: string; userId: string; amount: number }) {
+interface WithdrawalActionsProps {
+  requestId: string;
+  amount: number;
+}
+
+export function WithdrawalActions({
+  requestId,
+  amount,
+}: WithdrawalActionsProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [adminComment, setAdminComment] = useState("");
   const router = useRouter();
 
   async function handleAction(action: "approved" | "rejected") {
+    if (isLoading) return;
+
+    const confirmed = window.confirm(
+      action === "approved"
+        ? `Approve withdrawal of ${amount.toLocaleString()} credits?`
+        : "Reject this withdrawal request?"
+    );
+
+    if (!confirmed) return;
+
     setIsLoading(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
-    // 1. Update status
-    const { error: updateError } = await supabase
-      .from("withdrawal_requests")
-      .update({ status: action, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
-      .eq("id", requestId);
+    try {
+      const supabase = createClient();
 
-    if (updateError) {
-      toast.error(updateError.message);
-      setIsLoading(false);
-      return;
-    }
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-    // 2. Deduct wallet if approved
-    if (action === "approved") {
-      const { error: rpcError } = await supabase.rpc("deduct_credits", {
-        p_user_id: userId,
-        p_amount: amount,
-        p_type: "withdrawal",
-        p_description: `Withdrawal approved (${requestId})`,
-        p_metadata: { request_id: requestId },
-      });
-
-      if (rpcError) {
-        toast.error(rpcError.message);
-      } else {
-        toast.success(`Approved! ${amount} credits deducted.`);
-        router.refresh();
+      if (authError || !user) {
+        toast.error("Not authenticated.");
+        return;
       }
-    } else {
-      toast.success("Request rejected.");
+
+      const { error } = await supabase.rpc(
+        "process_withdrawal_request",
+        {
+          p_request_id: requestId,
+          p_action: action,
+          p_admin_comment: adminComment.trim() || null,
+        }
+      );
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success(
+        action === "approved"
+          ? "Withdrawal approved and credits deducted."
+          : "Withdrawal request rejected."
+      );
+
       router.refresh();
+    } catch (error) {
+      console.error("Withdrawal processing error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   return (
-    <div className="flex items-center justify-end gap-2">
-      <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600" onClick={() => handleAction("rejected")} disabled={isLoading}>
-        <X className="h-4 w-4" />
-      </Button>
-      <Button size="sm" className="text-green-500 hover:text-green-600" onClick={() => handleAction("approved")} disabled={isLoading}>
-        <Check className="h-4 w-4" />
-      </Button>
+    <div className="flex flex-col gap-3">
+      <textarea
+        value={adminComment}
+        onChange={(e) => setAdminComment(e.target.value)}
+        placeholder="Optional admin comment..."
+        rows={2}
+        disabled={isLoading}
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+      />
+
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => handleAction("approved")}
+          disabled={isLoading}
+          className="flex-1"
+        >
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="mr-2 h-4 w-4" />
+          )}
+          Approve
+        </Button>
+
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => handleAction("rejected")}
+          disabled={isLoading}
+          className="flex-1"
+        >
+          <X className="mr-2 h-4 w-4" />
+          Reject
+        </Button>
+      </div>
     </div>
   );
 }
