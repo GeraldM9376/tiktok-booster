@@ -13,20 +13,20 @@ import { createClient } from "@/lib/supabase/client";
 export function TaskButton({ 
   targetId, 
   type, 
-  isOnDailyTaskPage = false 
+  isOnDailyTaskPage = false,
+  onLikeComplete
 }: { 
   targetId: string; 
   type: "follow" | "like"; 
   isOnDailyTaskPage?: boolean;
+  onLikeComplete?: () => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
 
-  // Optimistic check on mount
   useEffect(() => {
     let isMounted = true;
-
     async function checkStatus() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -47,7 +47,6 @@ export function TaskButton({
       if (isMounted && data) setCompleted(true);
     }
     checkStatus();
-
     return () => { isMounted = false; };
   }, [targetId, type]);
 
@@ -61,12 +60,13 @@ export function TaskButton({
       router.push("/earn/tasks/daily");
       return;
     }
-    
+
     if (completed || isLoading) return;
-    
-    // 1. Instant UI update (Optimistic)
+
+    // Instant UI update
     setCompleted(true);
     setIsLoading(true);
+    if (onLikeComplete) onLikeComplete();
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -82,13 +82,13 @@ export function TaskButton({
 
     if (result.error) {
       toast.error(result.error);
-      setCompleted(false); // Revert on failure
+      setCompleted(false);
       if (result.error.includes("active rank")) {
         router.push("/earn/rank");
       }
     } else {
       toast.success(`Thank you! +${reward} credits added.`);
-      router.refresh(); // Background refresh to update the numbers
+      router.refresh();
     }
     setIsLoading(false);
   }
@@ -121,7 +121,7 @@ export function TaskButton({
 
   return (
     <motion.button
-      whileTap={{ scale: 0.8 }}
+      whileTap={{ scale: 0.7 }}
       onClick={handleTask}
       disabled={completed || isLoading}
       className={`p-2 rounded-full transition-colors ${
@@ -131,7 +131,7 @@ export function TaskButton({
       }`}
     >
       <motion.div
-        animate={completed ? { scale: [1, 1.4, 1] } : {}}
+        animate={completed ? { scale: [1, 1.5, 1] } : {}}
         transition={{ duration: 0.3 }}
       >
         <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
