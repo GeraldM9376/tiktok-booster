@@ -102,12 +102,23 @@ export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
                   />
                 </div>
 
-                <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary">
-                  <Wifi className="h-5 w-5 shrink-0 mt-0.5" />
+                {/* Animated IP message */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary"
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Wifi className="h-5 w-5 shrink-0 mt-0.5" />
+                  </motion.div>
                   <p>
                     <strong>Network & IP Detected:</strong> Our systems have identified your network IP address as originating from Kenya. All earnings and transactions will be processed in Ksh (KES) for seamless local compatibility.
                   </p>
-                </div>
+                </motion.div>
 
                 <Button type="submit" className="w-full h-12 text-base shadow-glow" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Create Account

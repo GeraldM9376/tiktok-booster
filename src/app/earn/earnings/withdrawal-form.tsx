@@ -85,15 +85,7 @@ export function WithdrawalForm({
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold">Payment Details Missing</p>
-            <p className="text-sm">You must set up your payment details in Settings before you can withdraw.</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
-              onClick={() => router.push("/earn/settings")}
-            >
-              Go to Settings
-            </Button>
+            <p className="text-sm">You must set up your payment details before you can withdraw.</p>
           </div>
         </div>
       )}
