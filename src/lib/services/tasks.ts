@@ -11,10 +11,10 @@ export async function completeTask(
   rewardAmount: number
 ) {
   const supabase = await createClient();
-  
-  // Use Kenya time (EAT) for today's date
-  const { data: today } = await supabase.rpc("get_local_date");
-  const dayBucket = today || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // Get Kenya local date
+  const { data: todayData } = await supabase.rpc("get_local_date");
+  const dayBucket = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   // 1. Check if user has an active rank
   const { data: rankData } = await supabase
@@ -28,8 +28,8 @@ export async function completeTask(
     return { error: "You need an active rank to earn credits." };
   }
 
-  const limit = taskType === "follow" 
-    ? (rankData.rank_packages as any).daily_follow_tasks 
+  const limit = taskType === "follow"
+    ? (rankData.rank_packages as any).daily_follow_tasks
     : (rankData.rank_packages as any).daily_like_tasks;
 
   // 2. Count how many tasks of this type they've done today
@@ -87,7 +87,7 @@ export async function completeTask(
     await supabase.rpc("increment_like_count", { video_id: targetId });
   }
 
-  // 7. Update daily stats
+  // 7. Update daily stats using Kenya date
   const { data: stats } = await supabase
     .from("user_daily_statistics")
     .select("*")

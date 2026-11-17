@@ -85,7 +85,7 @@ export async function signup(
     const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     await supabase.from("referral_codes").insert({ user_id: authData.user.id, code: newRefCode });
 
-    // 4. Process Referral
+        // 4. Process Referral
     if (data.ref) {
       const { data: referrerData } = await supabase
         .from("referral_codes")

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -16,7 +16,11 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
     setIsLoading(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error("Not authenticated");
+      setIsLoading(false);
+      return;
+    }
 
     // 1. Update the rank status
     const { error: updateError } = await supabase
@@ -41,10 +45,14 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
       const price = (rankData?.rank_packages as any)?.tier_value || 0;
 
       if (price > 0) {
-        await supabase.rpc("award_referral_commission", {
+        const { error: rpcError } = await supabase.rpc("award_referral_commission", {
           referred_user_id: userId,
           rank_price: price,
         });
+
+        if (rpcError) {
+          toast.error(`Commission error: ${rpcError.message}`);
+        }
       }
     }
 
@@ -55,11 +63,22 @@ export function RankActions({ requestId, userId }: { requestId: string; userId: 
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600" onClick={() => handleAction("rejected")} disabled={isLoading}>
-        <X className="h-4 w-4" />
+      <Button 
+        size="sm" 
+        variant="outline" 
+        className="text-red-500 hover:text-red-600" 
+        onClick={() => handleAction("rejected")} 
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
       </Button>
-      <Button size="sm" className="text-green-500 hover:text-green-600" onClick={() => handleAction("approved")} disabled={isLoading}>
-        <Check className="h-4 w-4" />
+      <Button 
+        size="sm" 
+        className="text-green-500 hover:text-green-600" 
+        onClick={() => handleAction("approved")} 
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
       </Button>
     </div>
   );

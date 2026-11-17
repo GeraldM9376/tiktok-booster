@@ -18,13 +18,11 @@ export async function getEarnerDashboardData(userId: string) {
     .eq("user_id", userId)
     .maybeSingle();
 
-  // Get local date safely
-  const { data: todayData, error: dateError } = await supabase.rpc("get_local_date");
-  const today = !dateError && todayData 
-    ? todayData 
-    : new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+  // Get Kenya local date
+  const { data: todayData } = await supabase.rpc("get_local_date");
+  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  // Get today's stats from user_daily_statistics
+  // Get today's stats
   const { data: todayStats } = await supabase
     .from("user_daily_statistics")
     .select("earnings, tasks_completed, follows_completed, likes_completed")
