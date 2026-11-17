@@ -62,7 +62,7 @@ async function DashboardContent() {
         <div className="glass rounded-xl p-6 flex flex-col justify-center items-center text-center">
           <h2 className="text-lg font-semibold mb-2">Start Earning</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            Visit the Daily Tasks to follow creators (+10) or browse videos to like (+1).
+            Visit the Daily Tasks to follow youtubers to earn +10 per follow and +1 per video liked.
           </p>
           <div className="flex gap-4">
             <Link href="/earn/tasks/daily" className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">

@@ -1,10 +1,10 @@
 // src/components/auth/auth-form.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Eye, EyeOff, Wifi } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -19,6 +19,71 @@ interface AuthFormProps {
   title: string;
   subtitle: string;
   redirectTo: string;
+}
+
+const KENYA_MESSAGE = "Network & IP Detected: Our systems have identified your network IP address as originating from Kenya. All earnings and transactions will be processed in Ksh (KES) for seamless local compatibility.";
+
+function AnimatedKenyaMessage() {
+  const [displayedText, setDisplayedText] = useState("");
+  const [waveKey, setWaveKey] = useState(0);
+
+  useEffect(() => {
+    let index = 0;
+    let timeoutId: NodeJS.Timeout;
+
+    function typeNext() {
+      if (index <= KENYA_MESSAGE.length) {
+        setDisplayedText(KENYA_MESSAGE.slice(0, index));
+        index++;
+        timeoutId = setTimeout(typeNext, 20); // 20ms per letter
+      } else {
+        // Wait 3 seconds before restarting
+        timeoutId = setTimeout(() => {
+          setDisplayedText("");
+          setWaveKey(prev => prev + 1);
+          index = 0;
+          typeNext();
+        }, 3000);
+      }
+    }
+
+    typeNext();
+
+    return () => clearTimeout(timeoutId);
+  }, [waveKey]);
+
+  return (
+    <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary">
+      {/* Animated WiFi Bars */}
+      <div className="shrink-0 mt-0.5 flex items-end gap-0.5 h-5">
+        {[0, 1, 2, 3].map((bar) => (
+          <motion.div
+            key={`${waveKey}-${bar}`}
+            className="w-1 bg-primary rounded-sm"
+            initial={{ height: 4, opacity: 0.3 }}
+            animate={{ 
+              height: [4, 8 + bar * 3, 4],
+              opacity: [0.3, 1, 0.3]
+            }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity, 
+              delay: bar * 0.2,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </div>
+      <p className="min-h-[4rem]">
+        {displayedText}
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+          className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-middle"
+        />
+      </p>
+    </div>
+  );
 }
 
 export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
@@ -103,22 +168,7 @@ export function AuthForm({ type, title, subtitle, redirectTo }: AuthFormProps) {
                 </div>
 
                 {/* Animated IP message */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary"
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Wifi className="h-5 w-5 shrink-0 mt-0.5" />
-                  </motion.div>
-                  <p>
-                    <strong>Network & IP Detected:</strong> Our systems have identified your network IP address as originating from Kenya. All earnings and transactions will be processed in Ksh (KES) for seamless local compatibility.
-                  </p>
-                </motion.div>
+                <AnimatedKenyaMessage />
 
                 <Button type="submit" className="w-full h-12 text-base shadow-glow" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Create Account
