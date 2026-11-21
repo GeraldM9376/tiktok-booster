@@ -59,7 +59,7 @@ async function WithdrawalsContent() {
       admin_comment,
       created_at,
       reviewed_at,
-      profiles (
+      profiles:profiles!withdrawal_requests_user_id_fkey (
         id,
         email,
         earner_profiles (
@@ -83,17 +83,17 @@ async function WithdrawalsContent() {
     );
   }
 
-  const pending = requests?.filter(
-    (request) => request.status === "pending"
-  ) ?? [];
+  const pending =
+    requests?.filter((request) => request.status === "pending") ?? [];
 
-  const approved = requests?.filter(
-    (request) => request.status === "approved" || request.status === "paid"
-  ) ?? [];
+  const approved =
+    requests?.filter(
+      (request) =>
+        request.status === "approved" || request.status === "paid"
+    ) ?? [];
 
-  const rejected = requests?.filter(
-    (request) => request.status === "rejected"
-  ) ?? [];
+  const rejected =
+    requests?.filter((request) => request.status === "rejected") ?? [];
 
   const pendingAmount = pending.reduce(
     (total, request) => total + Number(request.amount),
@@ -168,7 +168,9 @@ async function WithdrawalsContent() {
                   <th className="px-4 py-3 font-medium">Referrals</th>
                   <th className="px-4 py-3 font-medium">Payment Details</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -220,7 +222,9 @@ async function WithdrawalsContent() {
                             ) : (
                               <>
                                 <p>{bankName || "Bank not provided"}</p>
-                                <p>{accountNumber || "Account not provided"}</p>
+                                <p>
+                                  {accountNumber || "Account not provided"}
+                                </p>
                               </>
                             )}
                           </div>
@@ -245,7 +249,9 @@ async function WithdrawalsContent() {
                         {request.reviewed_at && (
                           <p className="mt-1 text-xs text-muted-foreground">
                             Reviewed:{" "}
-                            {new Date(request.reviewed_at).toLocaleDateString("en-KE")}
+                            {new Date(request.reviewed_at).toLocaleDateString(
+                              "en-KE"
+                            )}
                           </p>
                         )}
                       </td>

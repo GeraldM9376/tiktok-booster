@@ -47,7 +47,7 @@ async function TopupsContent() {
       transaction_reference,
       status,
       created_at,
-      profiles (
+      profiles:profiles!topup_requests_user_id_fkey (
         id,
         email
       ),
@@ -71,17 +71,14 @@ async function TopupsContent() {
     );
   }
 
-  const pending = requests?.filter(
-    (request) => request.status === "pending"
-  ) ?? [];
+  const pending =
+    requests?.filter((request) => request.status === "pending") ?? [];
 
-  const approved = requests?.filter(
-    (request) => request.status === "approved"
-  ) ?? [];
+  const approved =
+    requests?.filter((request) => request.status === "approved") ?? [];
 
-  const rejected = requests?.filter(
-    (request) => request.status === "rejected"
-  ) ?? [];
+  const rejected =
+    requests?.filter((request) => request.status === "rejected") ?? [];
 
   const pendingCredits = pending.reduce(
     (total, request) => total + Number(request.requested_credits),
@@ -100,7 +97,7 @@ async function TopupsContent() {
           Top-Up Requests
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Review and approve creators' credit purchases.
+          Review and approve creators&apos; credit purchases.
         </p>
       </div>
 
@@ -166,7 +163,9 @@ async function TopupsContent() {
                   <th className="px-4 py-3 font-medium">Credits</th>
                   <th className="px-4 py-3 font-medium">Reference</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -197,7 +196,10 @@ async function TopupsContent() {
                       </td>
 
                       <td className="whitespace-nowrap px-4 py-3 font-semibold text-primary">
-                        +{Number(request.requested_credits).toLocaleString("en-KE")}
+                        +
+                        {Number(request.requested_credits).toLocaleString(
+                          "en-KE"
+                        )}
                       </td>
 
                       <td className="px-4 py-3 font-mono text-xs">
