@@ -62,11 +62,8 @@ async function WithdrawalsContent() {
       profiles:profiles!withdrawal_requests_user_id_fkey (
         id,
         email,
-        earner_profiles (
-          payment_details,
-          profiles:profiles!earner_profiles_user_id_fkey (
-            id
-          )
+        earner_profiles:earner_profiles!earner_profiles_user_id_fkey (
+          payment_details
         )
       )
     `)
