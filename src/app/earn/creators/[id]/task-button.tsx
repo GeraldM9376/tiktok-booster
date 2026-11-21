@@ -1,4 +1,4 @@
-// src/app/earn/creators/[id]/task-button.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,14 +10,14 @@ import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function TaskButton({ 
-  targetId, 
-  type, 
+export function TaskButton({
+  targetId,
+  type,
   isOnDailyTaskPage = false,
-  onLikeComplete
-}: { 
-  targetId: string; 
-  type: "follow" | "like"; 
+  onLikeComplete,
+}: {
+  targetId: string;
+  type: "follow" | "like";
   isOnDailyTaskPage?: boolean;
   onLikeComplete?: () => void;
 }) {
@@ -27,14 +27,23 @@ export function TaskButton({
 
   useEffect(() => {
     let isMounted = true;
+
     async function checkStatus() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { data: todayData } = await supabase.rpc("get_local_date");
-      const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
-      
+      const today =
+        todayData ||
+        new Date(Date.now() + 3 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+
       const { data } = await supabase
         .from("completed_tasks")
         .select("id")
@@ -44,53 +53,65 @@ export function TaskButton({
         .eq("day_bucket", today)
         .maybeSingle();
 
-      if (isMounted && data) setCompleted(true);
+      if (isMounted && data) {
+        setCompleted(true);
+      }
     }
+
     checkStatus();
-    return () => { isMounted = false; };
+
+    return () => {
+      isMounted = false;
+    };
   }, [targetId, type]);
 
   async function handleTask() {
-    if (type === "follow" && !isOnDailyTaskPage) {
-      router.push("/earn/tasks/daily");
-      return;
-    }
-
-    if (type === "like" && !isOnDailyTaskPage) {
+    if (!isOnDailyTaskPage) {
       router.push("/earn/tasks/daily");
       return;
     }
 
     if (completed || isLoading) return;
 
-    // Instant UI update
-    setCompleted(true);
     setIsLoading(true);
-    if (onLikeComplete) onLikeComplete();
+    setCompleted(true);
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("You must be logged in.");
-      setCompleted(false);
-      setIsLoading(false);
-      return;
+    const optimisticReward = type === "follow" ? 10 : 1;
+
+    // Show immediate feedback
+    toast.success(`Task completed! +${optimisticReward} credits`);
+
+    if (type === "like" && onLikeComplete) {
+      onLikeComplete();
     }
 
-    const reward = type === "follow" ? 10 : 1;
-    const result = await completeTask(user.id, type, targetId, reward);
+    try {
+      const result = await completeTask(type, targetId);
 
-    if (result.error) {
-      toast.error(result.error);
-      setCompleted(false);
-      if (result.error.includes("active rank")) {
-        router.push("/earn/rank");
+      if (result.error || !result.success) {
+        setCompleted(false);
+
+        toast.error(
+          result.error || "Could not complete task. Please try again."
+        );
+
+        router.refresh();
+        return;
       }
-    } else {
-      toast.success(`Thank you! +${reward} credits added.`);
+
+      // Reconcile with the server-authoritative reward
+      if (result.reward !== optimisticReward) {
+        toast.info(`Confirmed reward: +${result.reward} credits`);
+      }
+
       router.refresh();
+    } catch {
+      setCompleted(false);
+      toast.error("Something went wrong. Please try again.");
+      router.refresh();
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   if (type === "follow") {
@@ -101,11 +122,14 @@ export function TaskButton({
             disabled
             className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/20"
           >
-            <Check className="mr-2 h-4 w-4" /> Followed
+            <Check className="mr-2 h-4 w-4" />
+            Followed
           </Button>
+
           <Button asChild variant="default" className="shadow-glow">
             <a href={`/earn/creators/${targetId}`}>
-              Earn More <ArrowRight className="ml-2 h-4 w-4" />
+              Earn More
+              <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </Button>
         </div>
@@ -113,8 +137,19 @@ export function TaskButton({
     }
 
     return (
-      <Button onClick={handleTask} disabled={isLoading} className="w-full shadow-glow">
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Follow (+10)</>}
+      <Button
+        onClick={handleTask}
+        disabled={isLoading}
+        className="w-full shadow-glow"
+      >
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Follow (+10)
+          </>
+        )}
       </Button>
     );
   }
@@ -125,8 +160,8 @@ export function TaskButton({
       onClick={handleTask}
       disabled={completed || isLoading}
       className={`p-2 rounded-full transition-colors ${
-        completed 
-          ? "text-red-500 bg-red-500/10" 
+        completed
+          ? "text-red-500 bg-red-500/10"
           : "text-green-500 hover:bg-green-500/10"
       }`}
     >

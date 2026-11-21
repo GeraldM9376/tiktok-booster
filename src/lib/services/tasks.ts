@@ -1,120 +1,38 @@
-// src/lib/services/tasks.ts
+
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function completeTask(
-  userId: string,
   taskType: "follow" | "like",
-  targetId: string,
-  rewardAmount: number
+  targetId: string
 ) {
   const supabase = await createClient();
 
-  // Get Kenya local date
-  const { data: todayData } = await supabase.rpc("get_local_date");
-  const dayBucket = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-  // 1. Check if user has an active rank
-  const { data: rankData } = await supabase
-    .from("user_ranks")
-    .select("rank_packages(daily_follow_tasks, daily_like_tasks)")
-    .eq("user_id", userId)
-    .eq("status", "approved")
-    .maybeSingle();
-
-  if (!rankData || !rankData.rank_packages) {
-    return { error: "You need an active rank to earn credits." };
+  if (authError || !user) {
+    return { error: "You must be logged in." };
   }
 
-  const limit = taskType === "follow"
-    ? (rankData.rank_packages as any).daily_follow_tasks
-    : (rankData.rank_packages as any).daily_like_tasks;
+  const { data, error } = await (supabase as any).rpc(
+    "complete_earning_task",
+    {
+      p_task_type: taskType,
+      p_target_id: targetId,
+    }
+  );
 
-  // 2. Count how many tasks of this type they've done today
-  const { count: completedToday } = await supabase
-    .from("completed_tasks")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("task_type", taskType)
-    .eq("day_bucket", dayBucket);
-
-  if (completedToday && completedToday >= limit) {
-    return { error: `You have reached your daily limit of ${limit} ${taskType}s. Upgrade your rank for more.` };
+  if (error) {
+    return { error: error.message };
   }
 
-  // 3. Prevent duplicate tasks
-  const { data: existing } = await supabase
-    .from("completed_tasks")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("task_type", taskType)
-    .eq("target_id", targetId)
-    .eq("day_bucket", dayBucket)
-    .maybeSingle();
-
-  if (existing) {
-    return { error: "You have already completed this task today." };
-  }
-
-  // 4. Record the task
-  const { error: taskError } = await supabase.from("completed_tasks").insert({
-    user_id: userId,
-    task_type: taskType,
-    target_id: targetId,
-    reward: rewardAmount,
-    day_bucket: dayBucket,
-  });
-
-  if (taskError) return { error: taskError.message };
-
-  // 5. Award points
-  const { error: rpcError } = await supabase.rpc("award_points", {
-    p_user_id: userId,
-    p_amount: rewardAmount,
-    p_type: "earning",
-    p_description: `Completed ${taskType} task`,
-    p_metadata: { target_id: targetId },
-  });
-
-  if (rpcError) return { error: rpcError.message };
-
-  // 6. Increment creator/video counts
-  if (taskType === "follow") {
-    await supabase.rpc("increment_follower_count", { creator_id: targetId });
-  } else if (taskType === "like") {
-    await supabase.rpc("increment_like_count", { video_id: targetId });
-  }
-
-  // 7. Update daily stats using Kenya date
-  const { data: stats } = await supabase
-    .from("user_daily_statistics")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("day", dayBucket)
-    .maybeSingle();
-
-  if (stats) {
-    await supabase
-      .from("user_daily_statistics")
-      .update({
-        earnings: stats.earnings + rewardAmount,
-        tasks_completed: stats.tasks_completed + 1,
-        follows_completed: taskType === "follow" ? stats.follows_completed + 1 : stats.follows_completed,
-        likes_completed: taskType === "like" ? stats.likes_completed + 1 : stats.likes_completed,
-      })
-      .eq("user_id", userId)
-      .eq("day", dayBucket);
-  } else {
-    await supabase.from("user_daily_statistics").insert({
-      user_id: userId,
-      day: dayBucket,
-      earnings: rewardAmount,
-      tasks_completed: 1,
-      follows_completed: taskType === "follow" ? 1 : 0,
-      likes_completed: taskType === "like" ? 1 : 0,
-    });
+  if (!data?.success) {
+    return { error: "Task completion could not be confirmed." };
   }
 
   revalidatePath("/earn/marketplace");
@@ -122,5 +40,8 @@ export async function completeTask(
   revalidatePath("/earn/dashboard");
   revalidatePath("/earn/tasks/daily");
 
-  return { success: true };
+  return {
+    success: true,
+    reward: Number(data.reward),
+  };
 }
