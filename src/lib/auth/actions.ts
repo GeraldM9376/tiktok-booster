@@ -1,4 +1,4 @@
-// src/lib/auth/actions.ts
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -11,27 +11,58 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export async function login(formData: FormData, targetDashboard: string) {
+export async function login(
+  formData: FormData,
+  targetDashboard: string
+) {
   const supabase = await createClient();
-  const data = { email: formData.get("email") as string, password: formData.get("password") as string };
+
+  const data = {
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+  };
 
   const result = authSchema.safeParse(data);
-  if (!result.success) return { error: result.error.issues[0].message };
 
-  const { data: authData, error } = await supabase.auth.signInWithPassword(data);
-  if (error) return { error: error.message };
+  if (!result.success) {
+    return { error: result.error.issues[0].message };
+  }
 
-  const { data: roleData } = await supabase
+  const { data: authData, error } =
+    await supabase.auth.signInWithPassword(data);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const { data: roleData, error: roleError } = await supabase
     .from("user_roles")
     .select("roles(name)")
     .eq("user_id", authData.user.id)
-    .single();
+    .maybeSingle();
+
+  const roleName = (
+    roleData?.roles as unknown as { name: string } | null
+  )?.name;
+
+  // Prevent non-admin users from entering the admin dashboard.
+  if (
+    targetDashboard.startsWith("/admin") &&
+    (roleError || roleName !== "admin")
+  ) {
+    await supabase.auth.signOut();
+
+    return {
+      error: "This account does not have administrator access.",
+    };
+  }
 
   revalidatePath("/", "layout");
 
-  if (roleData && (roleData.roles as unknown as { name: string })?.name === "admin") {
+  if (roleName === "admin") {
     redirect("/admin/dashboard");
   }
+
   redirect(targetDashboard);
 }
 
@@ -43,6 +74,7 @@ export async function signup(
   const supabase = await createClient();
 
   const refRaw = (formData.get("ref") as string | null) || "";
+
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -52,10 +84,11 @@ export async function signup(
   };
 
   const result = authSchema.safeParse(data);
-  if (!result.success) return { error: result.error.issues[0].message };
 
-  // The referral code is sent with the signup.
-  // The database trigger (on_signup_referral) creates the referral row.
+  if (!result.success) {
+    return { error: result.error.issues[0].message };
+  }
+
   const { data: authData, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
@@ -67,39 +100,73 @@ export async function signup(
     },
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    return { error: error.message };
+  }
 
   if (authData.user) {
     const userId = authData.user.id;
 
-    // 1. Create profile
+    // Create the appropriate profile.
     if (profileType === "earner") {
-      const { error: pErr } = await supabase.from("earner_profiles").insert({
-        user_id: userId,
-        phone_number: data.phone_number,
-      });
-      if (pErr) console.error("earner_profiles insert:", pErr.message);
+      const { error: profileError } = await supabase
+        .from("earner_profiles")
+        .insert({
+          user_id: userId,
+          phone_number: data.phone_number,
+        });
+
+      if (profileError) {
+        console.error("earner_profiles insert:", profileError.message);
+      }
     } else {
-      const { error: pErr } = await supabase.from("creator_profiles").insert({ user_id: userId });
-      if (pErr) console.error("creator_profiles insert:", pErr.message);
+      const { error: profileError } = await supabase
+        .from("creator_profiles")
+        .insert({ user_id: userId });
+
+      if (profileError) {
+        console.error("creator_profiles insert:", profileError.message);
+      }
     }
 
-    // 2. Assign role
+    // Assign the account role.
     const { data: roleData } = await supabase
-      .from("roles").select("id").eq("name", profileType).single();
+      .from("roles")
+      .select("id")
+      .eq("name", profileType)
+      .single();
+
     if (roleData) {
-      const { error: rErr } = await supabase
-        .from("user_roles").insert({ user_id: userId, role_id: roleData.id });
-      if (rErr) console.error("user_roles insert:", rErr.message);
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .insert({
+          user_id: userId,
+          role_id: roleData.id,
+        });
+
+      if (roleError) {
+        console.error("user_roles insert:", roleError.message);
+      }
     }
 
-    // 3. Generate own referral code
-    const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const { error: cErr } = await supabase
-      .from("referral_codes").insert({ user_id: userId, code: newRefCode });
-    if (cErr) console.error("referral_codes insert:", cErr.message);
+    // Generate the user's referral code.
+    const newRefCode = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
 
-    // 4. Save referred_by on the profile (the referral row is made by the trigger)
+    const { error: codeError } = await supabase
+      .from("referral_codes")
+      .insert({
+        user_id: userId,
+        code: newRefCode,
+      });
+
+    if (codeError) {
+      console.error("referral_codes insert:", codeError.message);
+    }
+
+    // Save the referring user when a referral exists.
     if (data.ref) {
       const { data: refRow } = await supabase
         .from("referrals")
@@ -108,8 +175,15 @@ export async function signup(
         .maybeSingle();
 
       if (refRow?.referrer_id) {
-        const table = profileType === "earner" ? "earner_profiles" : "creator_profiles";
-        await supabase.from(table).update({ referred_by: refRow.referrer_id }).eq("user_id", userId);
+        const table =
+          profileType === "earner"
+            ? "earner_profiles"
+            : "creator_profiles";
+
+        await supabase
+          .from(table)
+          .update({ referred_by: refRow.referrer_id })
+          .eq("user_id", userId);
       }
     }
   }
@@ -120,6 +194,8 @@ export async function signup(
 
 export async function signOut() {
   const supabase = await createClient();
+
   await supabase.auth.signOut();
+
   redirect("/");
 }

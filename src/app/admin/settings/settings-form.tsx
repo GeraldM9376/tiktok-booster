@@ -1,4 +1,4 @@
-// src/app/admin/settings/settings-form.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -9,36 +9,60 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
-export function SettingsForm({ initialPaybill, initialAccount }: { initialPaybill: string, initialAccount: string }) {
+type SettingsFormProps = {
+  initialPaybill: string;
+  initialAccount: string;
+};
+
+export function SettingsForm({
+  initialPaybill,
+  initialAccount,
+}: SettingsFormProps) {
   const [paybill, setPaybill] = useState(initialPaybill);
   const [account, setAccount] = useState(initialAccount);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const cleanPaybill = paybill.trim();
+    const cleanAccount = account.trim();
+
+    if (!cleanPaybill || !cleanAccount) {
+      toast.error("Both payment fields are required.");
+      return;
+    }
+
     setIsLoading(true);
 
-    const supabase = createClient();
-    
-    // Update both settings atomically
-    const { error: error1 } = await supabase
-      .from("platform_settings")
-      .update({ value: paybill, updated_at: new Date().toISOString() })
-      .eq("key", "payment_paybill");
+    try {
+      const supabase = createClient();
 
-    const { error: error2 } = await supabase
-      .from("platform_settings")
-      .update({ value: account, updated_at: new Date().toISOString() })
-      .eq("key", "payment_account");
+      const { error } = await supabase.rpc("update_payment_settings", {
+        p_paybill: cleanPaybill,
+        p_account: cleanAccount,
+      });
 
-    if (error1 || error2) {
-      toast.error("Failed to save settings.");
-    } else {
-      toast.success("Settings saved successfully!");
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      setPaybill(cleanPaybill);
+      setAccount(cleanAccount);
+
+      toast.success("Payment settings saved successfully.");
       router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save payment settings."
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   return (
@@ -49,9 +73,13 @@ export function SettingsForm({ initialPaybill, initialAccount }: { initialPaybil
           id="paybill"
           value={paybill}
           onChange={(e) => setPaybill(e.target.value)}
+          placeholder="Enter Paybill number"
           required
+          disabled={isLoading}
         />
-        <p className="text-xs text-muted-foreground">This is shown on the payment instructions page.</p>
+        <p className="text-xs text-muted-foreground">
+          This appears on the payment instructions page.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -60,7 +88,9 @@ export function SettingsForm({ initialPaybill, initialAccount }: { initialPaybil
           id="account"
           value={account}
           onChange={(e) => setAccount(e.target.value)}
+          placeholder="Enter account number"
           required
+          disabled={isLoading}
         />
       </div>
 

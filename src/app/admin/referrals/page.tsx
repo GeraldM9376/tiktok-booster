@@ -1,58 +1,251 @@
-// src/app/admin/referrals/page.tsx
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+export const dynamic = "force-dynamic";
+
+type ProfileRelation = {
+  email?: string | null;
+  display_name?: string | null;
+};
+
+type ReferralRow = {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  status: string;
+  created_at: string;
+  referrer: ProfileRelation | ProfileRelation[] | null;
+  referred: ProfileRelation | ProfileRelation[] | null;
+};
+
+function getProfile(
+  value: ProfileRelation | ProfileRelation[] | null
+): ProfileRelation | undefined {
+  return Array.isArray(value) ? value[0] : value ?? undefined;
+}
 
 async function ReferralsContent() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) redirect("/admin/auth");
 
-  const { data: referrals } = await supabase
+  const { data, error } = await supabase
     .from("referrals")
     .select(`
-      id, status, created_at,
-      referrer:referrer_id (email, display_name),
-      referred:referred_id (email, display_name)
-    `);
+      id,
+      referrer_id,
+      referred_id,
+      status,
+      created_at,
+      referrer:profiles!referrals_referrer_id_fkey(email, display_name),
+      referred:profiles!referrals_referred_id_fkey(email, display_name)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
-  // Group by referrer
-  const grouped = referrals?.reduce((acc: any, ref) => {
-    const key = (ref.referrer as any)?.email || "Unknown";
-    if (!acc[key]) acc[key] = { referrer: ref.referrer, total: 0, referred: [] };
-    acc[key].total += 1;
-    acc[key].referred.push(ref);
-    return acc;
-  }, {}) || {};
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <h1 className="text-3xl font-bold">Referral Tracking</h1>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5 text-red-500">
+          Failed to load referrals: {error.message}
+        </div>
+      </div>
+    );
+  }
+
+  const referrals = (data ?? []) as unknown as ReferralRow[];
+
+  const referrerIds = [...new Set(referrals.map((ref) => ref.referrer_id))];
+
+  const { data: rewards, error: rewardsError } =
+    referrerIds.length > 0
+      ? await supabase
+          .from("referral_rewards")
+          .select("referrer_id, amount")
+          .in("referrer_id", referrerIds)
+      : { data: [], error: null };
+
+  const rewardTotals = new Map<string, number>();
+
+  rewards?.forEach((reward) => {
+    rewardTotals.set(
+      reward.referrer_id,
+      (rewardTotals.get(reward.referrer_id) ?? 0) +
+        Number(reward.amount ?? 0)
+    );
+  });
+
+  const grouped = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      email: string;
+      total: number;
+      referrals: ReferralRow[];
+    }
+  >();
+
+  referrals.forEach((referral) => {
+    const profile = getProfile(referral.referrer);
+    const key = referral.referrer_id;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        id: key,
+        name: profile?.display_name || "Anonymous",
+        email: profile?.email || "Unknown email",
+        total: 0,
+        referrals: [],
+      });
+    }
+
+    const group = grouped.get(key)!;
+    group.total += 1;
+    group.referrals.push(referral);
+  });
+
+  const groups = [...grouped.values()].sort(
+    (a, b) => b.total - a.total
+  );
+
+  const qualifiedCount = referrals.filter(
+    (ref) => ref.status === "qualified" || ref.status === "completed"
+  ).length;
+
+  const totalRewards = [...rewardTotals.values()].reduce(
+    (sum, amount) => sum + amount,
+    0
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-3xl font-bold">Referral Tracking</h1>
-      <div className="grid gap-4">
-        {Object.values(grouped).map((group: any) => (
-          <div key={group.referrer.email} className="glass rounded-xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <p className="font-bold">{group.referrer.display_name || "Anonymous"}</p>
-                <p className="text-sm text-muted-foreground">{group.referrer.email}</p>
-              </div>
-              <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-bold">
-                {group.total} Referrals
-              </span>
-            </div>
-            <div className="space-y-2">
-              {group.referred.map((ref: any) => (
-                <div key={ref.id} className="flex justify-between text-sm p-2 bg-secondary/50 rounded">
-                  <span>{(ref.referred as any)?.email}</span>
-                  <span className="text-muted-foreground">{ref.status}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Referral Tracking
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Monitor referrals, qualification and referral rewards.
+        </p>
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="glass rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Total Referrals</p>
+          <p className="mt-2 text-3xl font-bold">{referrals.length}</p>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Qualified Referrals</p>
+          <p className="mt-2 text-3xl font-bold">{qualifiedCount}</p>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Recorded Rewards</p>
+          <p className="mt-2 text-3xl font-bold">
+            Ksh {totalRewards.toLocaleString("en-KE")}
+          </p>
+        </div>
+      </div>
+
+      {rewardsError && (
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-sm text-yellow-600">
+          Referral records loaded, but reward totals could not be retrieved:
+          {" "}{rewardsError.message}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">
+          Referrers ({groups.length})
+        </h2>
+
+        {groups.length === 0 ? (
+          <div className="glass rounded-xl p-10 text-center text-muted-foreground">
+            No referral records found.
+          </div>
+        ) : (
+          groups.map((group) => (
+            <div key={group.id} className="glass space-y-4 rounded-xl p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold">{group.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {group.email}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    ID: {group.id}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-lg font-bold text-primary">
+                    {group.total} Referrals
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Rewards: Ksh{" "}
+                    {(rewardTotals.get(group.id) ?? 0).toLocaleString("en-KE")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {group.referrals.map((referral) => {
+                  const referredProfile = getProfile(referral.referred);
+
+                  return (
+                    <div
+                      key={referral.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-secondary/50 p-3"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          {referredProfile?.display_name || "Unknown user"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {referredProfile?.email || "No email"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(referral.created_at).toLocaleDateString("en-KE")}
+                        </p>
+                      </div>
+
+                      <Badge
+                        variant={
+                          referral.status === "qualified" ||
+                          referral.status === "completed"
+                            ? "default"
+                            : referral.status === "rejected"
+                              ? "destructive"
+                              : "secondary"
+                        }
+                      >
+                        {referral.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {referrals.length === 1000 && (
+        <p className="text-sm text-muted-foreground">
+          Showing the latest 1,000 referrals. Additional records may exist.
+        </p>
+      )}
     </div>
   );
 }
@@ -60,7 +253,13 @@ async function ReferralsContent() {
 export default function AdminReferralsPage() {
   return (
     <DashboardShell type="admin" authPath="/admin/auth">
-      <Suspense fallback={<div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex h-[50vh] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        }
+      >
         <ReferralsContent />
       </Suspense>
     </DashboardShell>
