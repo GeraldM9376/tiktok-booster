@@ -29,6 +29,12 @@ function getProfile(
   return Array.isArray(value) ? value[0] : value ?? undefined;
 }
 
+function isQualified(status: string) {
+  return ["approved", "qualified", "completed"].includes(
+    status?.toLowerCase()
+  );
+}
+
 async function ReferralsContent() {
   const supabase = await createClient();
 
@@ -92,6 +98,8 @@ async function ReferralsContent() {
       name: string;
       email: string;
       total: number;
+      qualified: number;
+      pending: number;
       referrals: ReferralRow[];
     }
   >();
@@ -99,6 +107,7 @@ async function ReferralsContent() {
   referrals.forEach((referral) => {
     const profile = getProfile(referral.referrer);
     const key = referral.referrer_id;
+    const status = referral.status?.toLowerCase();
 
     if (!grouped.has(key)) {
       grouped.set(key, {
@@ -106,12 +115,22 @@ async function ReferralsContent() {
         name: profile?.display_name || "Anonymous",
         email: profile?.email || "Unknown email",
         total: 0,
+        qualified: 0,
+        pending: 0,
         referrals: [],
       });
     }
 
     const group = grouped.get(key)!;
+
     group.total += 1;
+
+    if (isQualified(status)) {
+      group.qualified += 1;
+    } else if (status !== "rejected") {
+      group.pending += 1;
+    }
+
     group.referrals.push(referral);
   });
 
@@ -119,8 +138,14 @@ async function ReferralsContent() {
     (a, b) => b.total - a.total
   );
 
-  const qualifiedCount = referrals.filter(
-    (ref) => ref.status === "qualified" || ref.status === "completed"
+  const qualifiedCount = referrals.filter((ref) =>
+    isQualified(ref.status)
+  ).length;
+
+  const pendingCount = referrals.filter(
+    (ref) =>
+      !isQualified(ref.status) &&
+      ref.status?.toLowerCase() !== "rejected"
   ).length;
 
   const totalRewards = [...rewardTotals.values()].reduce(
@@ -135,19 +160,28 @@ async function ReferralsContent() {
           Referral Tracking
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Monitor referrals, qualification and referral rewards.
+          Monitor referrals, approval status and referral rewards.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="glass rounded-xl p-5">
           <p className="text-sm text-muted-foreground">Total Referrals</p>
           <p className="mt-2 text-3xl font-bold">{referrals.length}</p>
         </div>
 
         <div className="glass rounded-xl p-5">
-          <p className="text-sm text-muted-foreground">Qualified Referrals</p>
-          <p className="mt-2 text-3xl font-bold">{qualifiedCount}</p>
+          <p className="text-sm text-muted-foreground">Approved Referrals</p>
+          <p className="mt-2 text-3xl font-bold text-green-500">
+            {qualifiedCount}
+          </p>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Pending Referrals</p>
+          <p className="mt-2 text-3xl font-bold text-yellow-500">
+            {pendingCount}
+          </p>
         </div>
 
         <div className="glass rounded-xl p-5">
@@ -190,7 +224,13 @@ async function ReferralsContent() {
 
                 <div className="text-right">
                   <p className="text-lg font-bold text-primary">
-                    {group.total} Referrals
+                    {group.total} Total Referrals
+                  </p>
+                  <p className="text-sm text-green-500">
+                    {group.qualified} Approved
+                  </p>
+                  <p className="text-sm text-yellow-500">
+                    {group.pending} Pending
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Rewards: Ksh{" "}
@@ -202,6 +242,7 @@ async function ReferralsContent() {
               <div className="space-y-2">
                 {group.referrals.map((referral) => {
                   const referredProfile = getProfile(referral.referred);
+                  const approved = isQualified(referral.status);
 
                   return (
                     <div
@@ -222,10 +263,9 @@ async function ReferralsContent() {
 
                       <Badge
                         variant={
-                          referral.status === "qualified" ||
-                          referral.status === "completed"
+                          approved
                             ? "default"
-                            : referral.status === "rejected"
+                            : referral.status?.toLowerCase() === "rejected"
                               ? "destructive"
                               : "secondary"
                         }
