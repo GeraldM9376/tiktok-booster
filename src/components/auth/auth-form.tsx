@@ -2,16 +2,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
 import { login, signup } from "@/lib/auth/actions";
 
 interface AuthFormProps {
@@ -88,33 +100,138 @@ function AnimatedKenyaMessage() {
   );
 }
 
-function LoadingButton({
-  loading,
+function SubmitButton({
   loadingText,
   children,
 }: {
-  loading: boolean;
   loadingText: string;
   children: React.ReactNode;
 }) {
+  const { pending } = useFormStatus();
+
   return (
     <Button
       type="submit"
-      className="h-12 w-full text-base shadow-glow transition-all duration-200 active:scale-[0.98]"
-      disabled={loading}
-      aria-busy={loading}
+      disabled={pending}
+      aria-busy={pending}
+      className="h-12 w-full text-base shadow-glow transition-all duration-200 active:scale-[0.97] disabled:cursor-wait disabled:opacity-80"
     >
-      {loading ? (
+      {pending ? (
         <>
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           {loadingText}
         </>
       ) : (
-        <>
-          {children}
-        </>
+        children
       )}
     </Button>
+  );
+}
+
+function AuthFields({
+  isLoading,
+  isSignup,
+  showPassword,
+  setShowPassword,
+  type,
+}: {
+  isLoading: boolean;
+  isSignup: boolean;
+  showPassword: boolean;
+  setShowPassword: (value: boolean) => void;
+  type: "earner" | "creator" | "admin";
+}) {
+  return (
+    <>
+      {isSignup && (
+        <div className="w-full space-y-2">
+          <Label htmlFor="display_name">
+            Display Name
+          </Label>
+
+          <Input
+            id="display_name"
+            name="display_name"
+            placeholder="Your name or username"
+            required
+            disabled={isLoading}
+            className="h-12 px-4"
+          />
+        </div>
+      )}
+
+      {isSignup && type === "earner" && (
+        <div className="w-full space-y-2">
+          <Label htmlFor="phone_number">
+            Phone Number
+          </Label>
+
+          <Input
+            id="phone_number"
+            name="phone_number"
+            type="tel"
+            placeholder="e.g. 0712345678"
+            required
+            disabled={isLoading}
+            className="h-12 px-4"
+          />
+        </div>
+      )}
+
+      <div className="w-full space-y-2">
+        <Label htmlFor="email">
+          Email address
+        </Label>
+
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          required
+          disabled={isLoading}
+          autoComplete="email"
+          className="h-12 px-4"
+        />
+      </div>
+
+      <div className="w-full space-y-2">
+        <Label htmlFor="password">
+          Password
+        </Label>
+
+        <div className="relative w-full">
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            required
+            disabled={isLoading}
+            autoComplete={
+              isSignup ? "new-password" : "current-password"
+            }
+            className="h-12 px-4 pr-12"
+          />
+
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={
+              showPassword ? "Hide password" : "Show password"
+            }
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -125,9 +242,6 @@ export function AuthForm({
   redirectTo,
 }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<
-    "login" | "signup" | null
-  >(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const searchParams = useSearchParams();
@@ -145,7 +259,6 @@ export function AuthForm({
     if (isLoading) return;
 
     setIsLoading(true);
-    setLoadingAction("login");
 
     try {
       const result = await login(formData, redirectTo);
@@ -153,13 +266,11 @@ export function AuthForm({
       if (result?.error) {
         toast.error(result.error);
         setIsLoading(false);
-        setLoadingAction(null);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Unable to sign in. Please try again.");
+      // Next.js redirect errors must be allowed to propagate.
       setIsLoading(false);
-      setLoadingAction(null);
+      throw error;
     }
   }
 
@@ -167,7 +278,6 @@ export function AuthForm({
     if (isLoading) return;
 
     setIsLoading(true);
-    setLoadingAction("signup");
 
     formData.set("ref", refCode.trim().toUpperCase());
 
@@ -181,13 +291,11 @@ export function AuthForm({
       if (result?.error) {
         toast.error(result.error);
         setIsLoading(false);
-        setLoadingAction(null);
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      toast.error("Unable to create your account. Please try again.");
+      // Next.js redirect errors must be allowed to propagate.
       setIsLoading(false);
-      setLoadingAction(null);
+      throw error;
     }
   }
 
@@ -209,12 +317,20 @@ export function AuthForm({
         </div>
 
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {title}
+          </h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            {subtitle}
+          </p>
         </div>
 
         {type === "admin" ? (
-          <form action={handleLogin} className="w-full space-y-6">
+          <form
+            action={handleLogin}
+            className="w-full space-y-6"
+          >
             <AuthFields
               isLoading={isLoading}
               isSignup={false}
@@ -223,15 +339,15 @@ export function AuthForm({
               type={type}
             />
 
-            <LoadingButton
-              loading={isLoading && loadingAction === "login"}
-              loadingText="Signing in..."
-            >
+            <SubmitButton loadingText="Signing in...">
               Sign In to Admin
-            </LoadingButton>
+            </SubmitButton>
           </form>
         ) : (
-          <Tabs defaultValue="login" className="flex w-full flex-col">
+          <Tabs
+            defaultValue="login"
+            className="flex w-full flex-col"
+          >
             <TabsList className="mb-8 grid h-12 w-full grid-cols-2">
               <TabsTrigger
                 value="login"
@@ -251,7 +367,10 @@ export function AuthForm({
             </TabsList>
 
             <TabsContent value="login" className="w-full">
-              <form action={handleLogin} className="w-full space-y-6">
+              <form
+                action={handleLogin}
+                className="w-full space-y-6"
+              >
                 <AuthFields
                   isLoading={isLoading}
                   isSignup={false}
@@ -260,17 +379,17 @@ export function AuthForm({
                   type={type}
                 />
 
-                <LoadingButton
-                  loading={isLoading && loadingAction === "login"}
-                  loadingText="Signing in..."
-                >
+                <SubmitButton loadingText="Signing in...">
                   Sign In
-                </LoadingButton>
+                </SubmitButton>
               </form>
             </TabsContent>
 
             <TabsContent value="register" className="w-full">
-              <form action={handleSignup} className="w-full space-y-6">
+              <form
+                action={handleSignup}
+                className="w-full space-y-6"
+              >
                 <AuthFields
                   isLoading={isLoading}
                   isSignup={true}
@@ -280,7 +399,7 @@ export function AuthForm({
                 />
 
                 <div className="w-full space-y-2">
-                  <Label htmlFor="ref" className="text-sm font-medium">
+                  <Label htmlFor="ref">
                     Referral Code (optional)
                   </Label>
 
@@ -299,117 +418,14 @@ export function AuthForm({
 
                 <AnimatedKenyaMessage />
 
-                <LoadingButton
-                  loading={isLoading && loadingAction === "signup"}
-                  loadingText="Creating account..."
-                >
+                <SubmitButton loadingText="Creating account...">
                   Create Account
-                </LoadingButton>
+                </SubmitButton>
               </form>
             </TabsContent>
           </Tabs>
         )}
       </div>
     </motion.div>
-  );
-}
-
-function AuthFields({
-  isLoading,
-  isSignup,
-  showPassword,
-  setShowPassword,
-  type,
-}: {
-  isLoading: boolean;
-  isSignup: boolean;
-  showPassword: boolean;
-  setShowPassword: (value: boolean) => void;
-  type: "earner" | "creator" | "admin";
-}) {
-  return (
-    <>
-      {isSignup && (
-        <div className="w-full space-y-2">
-          <Label htmlFor="display_name" className="text-sm font-medium">
-            Display Name
-          </Label>
-
-          <Input
-            id="display_name"
-            name="display_name"
-            placeholder="Your name or username"
-            required
-            disabled={isLoading}
-            className="h-12 px-4"
-          />
-        </div>
-      )}
-
-      {isSignup && type === "earner" && (
-        <div className="w-full space-y-2">
-          <Label htmlFor="phone_number" className="text-sm font-medium">
-            Phone Number
-          </Label>
-
-          <Input
-            id="phone_number"
-            name="phone_number"
-            placeholder="e.g. 0712345678"
-            required
-            disabled={isLoading}
-            className="h-12 px-4"
-          />
-        </div>
-      )}
-
-      <div className="w-full space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium">
-          Email address
-        </Label>
-
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-          disabled={isLoading}
-          className="h-12 px-4"
-        />
-      </div>
-
-      <div className="w-full space-y-2">
-        <Label htmlFor="password" className="text-sm font-medium">
-          Password
-        </Label>
-
-        <div className="relative w-full">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            required
-            disabled={isLoading}
-            className="h-12 px-4 pr-12"
-          />
-
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <EyeOff className="h-5 w-5" />
-            ) : (
-              <Eye className="h-5 w-5" />
-            )}
-          </button>
-        </div>
-      </div>
-    </>
   );
 }

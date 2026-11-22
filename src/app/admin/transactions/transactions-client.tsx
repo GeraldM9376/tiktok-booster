@@ -2,8 +2,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Search } from "lucide-react";
+import {
+  RefreshCw,
+  Search,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { deleteFilteredTransactions } from "./actions";
 
 type Transaction = {
   id: string;
@@ -54,9 +62,12 @@ export default function TransactionsClient({
 }: {
   transactions: Transaction[];
 }) {
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredTransactions = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -112,6 +123,40 @@ export default function TransactionsClient({
     ...new Set(transactions.map((tx) => tx.type)),
   ].sort();
 
+  async function handleDeleteFiltered() {
+    const ids = filteredTransactions.map((tx) => tx.id);
+
+    if (ids.length === 0 || isDeleting) return;
+
+    const confirmed = window.confirm(
+      `PERMANENT DELETION\n\nYou are about to permanently delete ${ids.length} transaction records matching your current filters.\n\nThis action CANNOT be undone.\n\nWallet balances will NOT be changed.\n\nDo you want to continue?`
+    );
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    try {
+      const result = await deleteFilteredTransactions(ids);
+
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(
+        `${result.deletedCount} transaction records permanently deleted.`
+      );
+
+      router.refresh();
+    } catch (error) {
+      console.error("Transaction deletion error:", error);
+      toast.error("Failed to delete transactions.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -126,7 +171,7 @@ export default function TransactionsClient({
 
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => router.refresh()}
           className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-secondary"
         >
           <RefreshCw className="h-4 w-4" />
@@ -214,9 +259,29 @@ export default function TransactionsClient({
           </select>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Showing {filteredTransactions.length} of {transactions.length} loaded transactions.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+          <p className="text-xs text-muted-foreground">
+            Showing {filteredTransactions.length} of{" "}
+            {transactions.length} loaded transactions.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleDeleteFiltered}
+            disabled={filteredTransactions.length === 0 || isDeleting}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+
+            {isDeleting
+              ? "Deleting..."
+              : `Delete filtered (${filteredTransactions.length})`}
+          </button>
+        </div>
       </div>
 
       <div className="glass overflow-hidden rounded-xl">
@@ -324,6 +389,8 @@ export default function TransactionsClient({
       {transactions.length === 500 && (
         <p className="text-sm text-muted-foreground">
           Showing the latest 500 transactions. Older records may exist.
+          Deletion applies only to matching records among these loaded
+          transactions.
         </p>
       )}
     </div>
