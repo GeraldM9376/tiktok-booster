@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -51,12 +51,12 @@ function AnimatedKenyaMessage() {
   }, [waveKey]);
 
   return (
-    <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg flex items-start gap-3 text-sm text-primary">
-      <div className="shrink-0 mt-0.5 flex items-end gap-0.5 h-5">
+    <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/10 p-4 text-sm text-primary">
+      <div className="mt-0.5 flex h-5 shrink-0 items-end gap-0.5">
         {[0, 1, 2, 3].map((bar) => (
           <motion.div
             key={`${waveKey}-${bar}`}
-            className="w-1 bg-primary rounded-sm"
+            className="w-1 rounded-sm bg-primary"
             initial={{ height: 4, opacity: 0.3 }}
             animate={{
               height: [4, 8 + bar * 3, 4],
@@ -81,10 +81,40 @@ function AnimatedKenyaMessage() {
             repeat: Infinity,
             repeatType: "reverse",
           }}
-          className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-middle"
+          className="ml-0.5 inline-block h-4 w-0.5 bg-primary align-middle"
         />
       </p>
     </div>
+  );
+}
+
+function LoadingButton({
+  loading,
+  loadingText,
+  children,
+}: {
+  loading: boolean;
+  loadingText: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      type="submit"
+      className="h-12 w-full text-base shadow-glow transition-all duration-200 active:scale-[0.98]"
+      disabled={loading}
+      aria-busy={loading}
+    >
+      {loading ? (
+        <>
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          {loadingText}
+        </>
+      ) : (
+        <>
+          {children}
+        </>
+      )}
+    </Button>
   );
 }
 
@@ -95,7 +125,9 @@ export function AuthForm({
   redirectTo,
 }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<"login" | "signup" | null>(null);
+  const [loadingAction, setLoadingAction] = useState<
+    "login" | "signup" | null
+  >(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const searchParams = useSearchParams();
@@ -124,9 +156,10 @@ export function AuthForm({
         setLoadingAction(null);
       }
     } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Unable to sign in. Please try again.");
       setIsLoading(false);
       setLoadingAction(null);
-      throw error;
     }
   }
 
@@ -151,9 +184,10 @@ export function AuthForm({
         setLoadingAction(null);
       }
     } catch (error) {
+      console.error("Registration error:", error);
+      toast.error("Unable to create your account. Please try again.");
       setIsLoading(false);
       setLoadingAction(null);
-      throw error;
     }
   }
 
@@ -180,7 +214,7 @@ export function AuthForm({
         </div>
 
         {type === "admin" ? (
-          <form action={handleLogin} className="space-y-6 w-full">
+          <form action={handleLogin} className="w-full space-y-6">
             <AuthFields
               isLoading={isLoading}
               isSignup={false}
@@ -189,30 +223,35 @@ export function AuthForm({
               type={type}
             />
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-base shadow-glow"
-              disabled={isLoading}
+            <LoadingButton
+              loading={isLoading && loadingAction === "login"}
+              loadingText="Signing in..."
             >
-              {isLoading && (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              )}
-              {isLoading ? "Signing in..." : "Sign In to Admin"}
-            </Button>
+              Sign In to Admin
+            </LoadingButton>
           </form>
         ) : (
-          <Tabs defaultValue="login" className="w-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-              <TabsTrigger value="login" className="text-base" disabled={isLoading}>
+          <Tabs defaultValue="login" className="flex w-full flex-col">
+            <TabsList className="mb-8 grid h-12 w-full grid-cols-2">
+              <TabsTrigger
+                value="login"
+                className="text-base"
+                disabled={isLoading}
+              >
                 Sign In
               </TabsTrigger>
-              <TabsTrigger value="register" className="text-base" disabled={isLoading}>
+
+              <TabsTrigger
+                value="register"
+                className="text-base"
+                disabled={isLoading}
+              >
                 Create Account
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="w-full">
-              <form action={handleLogin} className="space-y-6 w-full">
+              <form action={handleLogin} className="w-full space-y-6">
                 <AuthFields
                   isLoading={isLoading}
                   isSignup={false}
@@ -221,23 +260,17 @@ export function AuthForm({
                   type={type}
                 />
 
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base shadow-glow"
-                  disabled={isLoading}
+                <LoadingButton
+                  loading={isLoading && loadingAction === "login"}
+                  loadingText="Signing in..."
                 >
-                  {isLoading && loadingAction === "login" && (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  )}
-                  {isLoading && loadingAction === "login"
-                    ? "Signing in..."
-                    : "Sign In"}
-                </Button>
+                  Sign In
+                </LoadingButton>
               </form>
             </TabsContent>
 
             <TabsContent value="register" className="w-full">
-              <form action={handleSignup} className="space-y-6 w-full">
+              <form action={handleSignup} className="w-full space-y-6">
                 <AuthFields
                   isLoading={isLoading}
                   isSignup={true}
@@ -246,7 +279,7 @@ export function AuthForm({
                   type={type}
                 />
 
-                <div className="space-y-2 w-full">
+                <div className="w-full space-y-2">
                   <Label htmlFor="ref" className="text-sm font-medium">
                     Referral Code (optional)
                   </Label>
@@ -266,18 +299,12 @@ export function AuthForm({
 
                 <AnimatedKenyaMessage />
 
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base shadow-glow"
-                  disabled={isLoading}
+                <LoadingButton
+                  loading={isLoading && loadingAction === "signup"}
+                  loadingText="Creating account..."
                 >
-                  {isLoading && loadingAction === "signup" && (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  )}
-                  {isLoading && loadingAction === "signup"
-                    ? "Creating account..."
-                    : "Create Account"}
-                </Button>
+                  Create Account
+                </LoadingButton>
               </form>
             </TabsContent>
           </Tabs>
@@ -293,14 +320,21 @@ function AuthFields({
   showPassword,
   setShowPassword,
   type,
-}: any) {
+}: {
+  isLoading: boolean;
+  isSignup: boolean;
+  showPassword: boolean;
+  setShowPassword: (value: boolean) => void;
+  type: "earner" | "creator" | "admin";
+}) {
   return (
     <>
       {isSignup && (
-        <div className="space-y-2 w-full">
+        <div className="w-full space-y-2">
           <Label htmlFor="display_name" className="text-sm font-medium">
             Display Name
           </Label>
+
           <Input
             id="display_name"
             name="display_name"
@@ -313,10 +347,11 @@ function AuthFields({
       )}
 
       {isSignup && type === "earner" && (
-        <div className="space-y-2 w-full">
+        <div className="w-full space-y-2">
           <Label htmlFor="phone_number" className="text-sm font-medium">
             Phone Number
           </Label>
+
           <Input
             id="phone_number"
             name="phone_number"
@@ -328,10 +363,11 @@ function AuthFields({
         </div>
       )}
 
-      <div className="space-y-2 w-full">
+      <div className="w-full space-y-2">
         <Label htmlFor="email" className="text-sm font-medium">
           Email address
         </Label>
+
         <Input
           id="email"
           name="email"
@@ -343,7 +379,7 @@ function AuthFields({
         />
       </div>
 
-      <div className="space-y-2 w-full">
+      <div className="w-full space-y-2">
         <Label htmlFor="password" className="text-sm font-medium">
           Password
         </Label>
@@ -364,6 +400,7 @@ function AuthFields({
             disabled={isLoading}
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />
