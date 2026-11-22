@@ -38,6 +38,7 @@ export function TaskButton({
       if (!user) return;
 
       const { data: todayData } = await supabase.rpc("get_local_date");
+
       const today =
         todayData ||
         new Date(Date.now() + 3 * 60 * 60 * 1000)
@@ -74,39 +75,72 @@ export function TaskButton({
     if (completed || isLoading) return;
 
     setIsLoading(true);
-    setCompleted(true);
-
-    const optimisticReward = type === "follow" ? 10 : 1;
-
-    // Show immediate feedback
-    toast.success(`Task completed! +${optimisticReward} credits`);
-
-    if (type === "like" && onLikeComplete) {
-      onLikeComplete();
-    }
 
     try {
+      const supabase = createClient();
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        toast.error("Please log in again.");
+        return;
+      }
+
+      // Require an approved rank before allowing follow tasks.
+      if (type === "follow") {
+        const { data: activeRank, error: rankError } = await supabase
+          .from("user_ranks")
+          .select("rank_id")
+          .eq("user_id", user.id)
+          .eq("status", "approved")
+          .maybeSingle();
+
+        if (rankError) {
+          console.error("Rank verification error:", rankError);
+          toast.error("Could not verify your account rank. Please try again.");
+          return;
+        }
+
+        if (!activeRank) {
+          toast.error("Choose an account rank before completing follow tasks.");
+          router.push("/earn/rank");
+          return;
+        }
+      }
+
       const result = await completeTask(type, targetId);
 
       if (result.error || !result.success) {
-        setCompleted(false);
+        const errorMessage =
+          result.error || "Could not complete task. Please try again.";
 
-        toast.error(
-          result.error || "Could not complete task. Please try again."
-        );
+        if (
+          type === "follow" &&
+          errorMessage.toLowerCase().includes("active rank")
+        ) {
+          toast.error("Choose an account rank before completing follow tasks.");
+          router.push("/earn/rank");
+          return;
+        }
 
+        toast.error(errorMessage);
         router.refresh();
         return;
       }
 
-      // Reconcile with the server-authoritative reward
-      if (result.reward !== optimisticReward) {
-        toast.info(`Confirmed reward: +${result.reward} credits`);
+      setCompleted(true);
+
+      if (type === "like" && onLikeComplete) {
+        onLikeComplete();
       }
 
+      toast.success(`Task completed! +${result.reward} credits`);
       router.refresh();
-    } catch {
-      setCompleted(false);
+    } catch (error) {
+      console.error("Task completion error:", error);
       toast.error("Something went wrong. Please try again.");
       router.refresh();
     } finally {
