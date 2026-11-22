@@ -95,6 +95,7 @@ export function AuthForm({
   redirectTo,
 }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"login" | "signup" | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const searchParams = useSearchParams();
@@ -109,7 +110,10 @@ export function AuthForm({
   }, [refFromUrl]);
 
   async function handleLogin(formData: FormData) {
+    if (isLoading) return;
+
     setIsLoading(true);
+    setLoadingAction("login");
 
     try {
       const result = await login(formData, redirectTo);
@@ -117,17 +121,21 @@ export function AuthForm({
       if (result?.error) {
         toast.error(result.error);
         setIsLoading(false);
+        setLoadingAction(null);
       }
     } catch (error) {
       setIsLoading(false);
+      setLoadingAction(null);
       throw error;
     }
   }
 
   async function handleSignup(formData: FormData) {
-    setIsLoading(true);
+    if (isLoading) return;
 
-    // Ensure the current referral code is submitted as "ref".
+    setIsLoading(true);
+    setLoadingAction("signup");
+
     formData.set("ref", refCode.trim().toUpperCase());
 
     try {
@@ -140,9 +148,11 @@ export function AuthForm({
       if (result?.error) {
         toast.error(result.error);
         setIsLoading(false);
+        setLoadingAction(null);
       }
     } catch (error) {
       setIsLoading(false);
+      setLoadingAction(null);
       throw error;
     }
   }
@@ -187,16 +197,16 @@ export function AuthForm({
               {isLoading && (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               )}
-              Sign In to Admin
+              {isLoading ? "Signing in..." : "Sign In to Admin"}
             </Button>
           </form>
         ) : (
           <Tabs defaultValue="login" className="w-full flex flex-col">
             <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-              <TabsTrigger value="login" className="text-base">
+              <TabsTrigger value="login" className="text-base" disabled={isLoading}>
                 Sign In
               </TabsTrigger>
-              <TabsTrigger value="register" className="text-base">
+              <TabsTrigger value="register" className="text-base" disabled={isLoading}>
                 Create Account
               </TabsTrigger>
             </TabsList>
@@ -216,10 +226,12 @@ export function AuthForm({
                   className="w-full h-12 text-base shadow-glow"
                   disabled={isLoading}
                 >
-                  {isLoading && (
+                  {isLoading && loadingAction === "login" && (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   )}
-                  Sign In
+                  {isLoading && loadingAction === "login"
+                    ? "Signing in..."
+                    : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -259,10 +271,12 @@ export function AuthForm({
                   className="w-full h-12 text-base shadow-glow"
                   disabled={isLoading}
                 >
-                  {isLoading && (
+                  {isLoading && loadingAction === "signup" && (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   )}
-                  Create Account
+                  {isLoading && loadingAction === "signup"
+                    ? "Creating account..."
+                    : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
@@ -347,8 +361,9 @@ function AuthFields({
 
           <button
             type="button"
+            disabled={isLoading}
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />

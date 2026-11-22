@@ -2,9 +2,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AlertCircle, ArrowRight, Wallet } from "lucide-react";
 
 interface WithdrawalFormProps {
   availableBalance: number;
@@ -19,29 +22,47 @@ export function WithdrawalForm({
   requiredReferrals,
   hasPaymentDetails,
 }: WithdrawalFormProps) {
+  const router = useRouter();
+
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showReferralRequirement, setShowReferralRequirement] =
+    useState(false);
+
+  const numericAmount = Number(amount);
+  const canEnterAmount =
+    hasPaymentDetails && availableBalance >= 500;
+
+  const formattedAmount = amount
+    ? Number(amount).toLocaleString("en-KE")
+    : "";
 
   async function handleWithdrawal() {
-    const requestedAmount = Number(amount);
-
-    if (!Number.isSafeInteger(requestedAmount) || requestedAmount < 500) {
-      toast.error("Minimum withdrawal is 500 credits.");
-      return;
-    }
-
     if (!hasPaymentDetails) {
       toast.error("Please save your payment details first.");
       return;
     }
 
-    if (qualifiedReferrals < requiredReferrals) {
-      toast.error("You have not met the referral requirement.");
+    if (availableBalance < 500) {
+      toast.error("You need at least KSh 500 to withdraw.");
       return;
     }
 
-    if (requestedAmount > availableBalance) {
-      toast.error("Insufficient wallet balance.");
+    if (!amount || !Number.isSafeInteger(numericAmount) || numericAmount < 500) {
+      toast.error("Enter a valid amount of at least KSh 500.");
+      return;
+    }
+
+    if (numericAmount > availableBalance) {
+      toast.error("Your withdrawal amount exceeds your available balance.");
+      return;
+    }
+
+    // Referral information is revealed only after all earlier
+    // requirements have been met and the user requests withdrawal.
+    setShowReferralRequirement(true);
+
+    if (qualifiedReferrals < requiredReferrals) {
       return;
     }
 
@@ -61,7 +82,7 @@ export function WithdrawalForm({
       }
 
       const { error } = await supabase.rpc("request_withdrawal", {
-        p_amount: requestedAmount,
+        p_amount: numericAmount,
       });
 
       if (error) {
@@ -71,7 +92,8 @@ export function WithdrawalForm({
 
       toast.success("Withdrawal request submitted successfully.");
       setAmount("");
-      window.location.reload();
+      setShowReferralRequirement(false);
+      router.refresh();
     } catch (error) {
       console.error("Withdrawal error:", error);
       toast.error("Something went wrong. Please try again.");
@@ -81,54 +103,130 @@ export function WithdrawalForm({
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label
-          htmlFor="withdrawal-amount"
-          className="mb-2 block text-sm font-medium"
-        >
-          Withdrawal Amount
-        </label>
+    <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <div className="border-b bg-muted/30 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Wallet className="h-5 w-5" />
+          </div>
 
-        <input
-          id="withdrawal-amount"
-          type="number"
-          min="500"
-          step="1"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Enter amount"
-          disabled={isLoading}
-          className="w-full rounded-md border bg-background px-3 py-2"
-        />
+          <div>
+            <h2 className="text-lg font-bold">Request a Withdrawal</h2>
+            <p className="text-sm text-muted-foreground">
+              Withdraw your available earnings.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Available balance: {availableBalance.toLocaleString()} credits
-      </p>
+      <div className="space-y-5 p-5">
+        <div className="rounded-xl border bg-background p-4">
+          <p className="text-sm text-muted-foreground">
+            Available balance
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
+            KSh {Number(availableBalance).toLocaleString("en-KE")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Minimum withdrawal: KSh 500
+          </p>
+        </div>
 
-      <p className="text-sm text-muted-foreground">
-        Qualified referrals: {qualifiedReferrals} / {requiredReferrals}
-      </p>
+        {!hasPaymentDetails ? (
+          <div className="flex items-start gap-3 rounded-lg border border-orange-500/20 bg-orange-500/10 p-3 text-sm text-orange-600">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              Save your payment details above before entering a
+              withdrawal amount.
+            </p>
+          </div>
+        ) : availableBalance < 500 ? (
+          <div className="flex items-start gap-3 rounded-lg border border-orange-500/20 bg-orange-500/10 p-3 text-sm text-orange-600">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              Your balance is below the KSh 500 minimum. Continue
+              earning until you reach the minimum withdrawal amount.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <label
+              htmlFor="withdrawal-amount"
+              className="block text-sm font-semibold"
+            >
+              Amount to withdraw
+            </label>
 
-      <Button
-        type="button"
-        onClick={handleWithdrawal}
-        disabled={
-          isLoading ||
-          !hasPaymentDetails ||
-          qualifiedReferrals < requiredReferrals
-        }
-        className="w-full"
-      >
-        {isLoading ? "Submitting..." : "Request Withdrawal"}
-      </Button>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                KSh
+              </span>
 
-      {!hasPaymentDetails && (
-        <p className="text-sm text-destructive">
-          Save your payment details before requesting a withdrawal.
-        </p>
-      )}
-    </div>
+              <input
+                id="withdrawal-amount"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={formattedAmount}
+                onChange={(e) => {
+                  setAmount(e.target.value.replace(/\D/g, ""));
+                }}
+                placeholder="0"
+                disabled={isLoading}
+                className="h-14 w-full rounded-xl border bg-background pl-16 pr-4 text-lg font-semibold tabular-nums outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Enter a whole-number amount. Maximum available: KSh{" "}
+              {Number(availableBalance).toLocaleString("en-KE")}.
+            </p>
+          </div>
+        )}
+
+        <Button
+          type="button"
+          onClick={handleWithdrawal}
+          disabled={isLoading || !canEnterAmount}
+          className="h-12 w-full text-base font-semibold"
+        >
+          {isLoading ? "Submitting request..." : "Request Withdrawal"}
+        </Button>
+
+        {showReferralRequirement &&
+          qualifiedReferrals < requiredReferrals && (
+            <div className="space-y-3 rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
+
+                <div>
+                  <h3 className="font-semibold">
+                    Referral requirement not yet met
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    You have {qualifiedReferrals} approved{" "}
+                    {qualifiedReferrals === 1 ? "referral" : "referrals"}.
+                    You need {requiredReferrals} to withdraw.
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-orange-600">
+                    {requiredReferrals - qualifiedReferrals} more{" "}
+                    {requiredReferrals - qualifiedReferrals === 1
+                      ? "referral"
+                      : "referrals"}{" "}
+                    required.
+                  </p>
+                </div>
+              </div>
+
+              <Button asChild className="w-full">
+                <Link href="/earn/referral">
+                  Go to Referral Page
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          )}
+      </div>
+    </section>
   );
 }
