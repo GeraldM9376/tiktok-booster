@@ -269,7 +269,7 @@ export default function DemoFeedClient({
               <div className="rounded-2xl bg-gradient-to-br from-[#27213b] to-[#171717] p-6">
                 <p className="text-sm text-gray-400">Available credits</p>
                 <p className="mt-3 text-4xl font-black">346</p>
-                <p className="mt-2 text-xs text-gray-500">Demo account balance</p>
+                <p className="mt-2 text-xs text-gray-500">account balance</p>
                 <div className="mt-6 rounded-lg bg-white/10 py-3 text-center text-sm font-semibold">Top up credits</div>
               </div>
               <h2 className="font-semibold">Recent activity</h2>

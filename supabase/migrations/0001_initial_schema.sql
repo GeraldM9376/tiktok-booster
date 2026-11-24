@@ -128,7 +128,7 @@ create table public.user_ranks (
 );
 
 -- ============================================================
--- NICHES + DEMO CREATORS + VIDEOS
+-- NICHES + CREATORS + VIDEOS
 -- ============================================================
 
 create table public.niches (
@@ -139,7 +139,7 @@ create table public.niches (
   created_at  timestamptz not null default now()
 );
 
--- Demo creator marketplace (seeded with 10k)
+-- Dem creator marketplace (seeded with 10k)
 create table public.demo_creators (
   id            uuid primary key default gen_random_uuid(),
   niche_id      int not null references public.niches(id) on delete cascade,
