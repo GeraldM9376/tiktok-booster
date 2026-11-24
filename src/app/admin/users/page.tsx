@@ -1,4 +1,4 @@
-
+﻿
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -221,3 +221,4 @@ export default function AdminUsersPage() {
     </DashboardShell>
   );
 }
+

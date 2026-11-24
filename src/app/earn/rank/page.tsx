@@ -1,9 +1,9 @@
-// src/app/earn/rank/page.tsx
+﻿// src/app/earn/rank/page.tsx
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Loader2, Star, CheckCircle2, Lock, AlertCircle } from "lucide-react";
+import { Loader2, Star, CheckCircle2, Lock } from "lucide-react";
 import { RankUpgradeClient } from "./rank-upgrade-client";
 
 async function RankContent() {
@@ -42,16 +42,6 @@ async function RankContent() {
           Upgrade your rank to unlock higher daily task limits.
         </p>
       </div>
-
-      {isPending && (
-        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 flex items-center gap-3">
-          <AlertCircle className="h-5 w-5" />
-          <div>
-            <p className="font-semibold">Approval Pending</p>
-            <p className="text-sm">Your rank purchase is awaiting admin approval. You cannot earn credits until it is approved.</p>
-          </div>
-        </div>
-      )}
 
       <div className="glass rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
         <div>

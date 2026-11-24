@@ -1,4 +1,4 @@
-
+﻿
 "use client";
 
 import { useState } from "react";
@@ -48,6 +48,7 @@ const ICONS: Record<string, React.ElementType> = {
   "/creator/campaigns": Megaphone,
   "/creator/analytics/audience": BarChart3,
   "/creator/wallet": Wallet,
+  "/creator/referral": Gift,
   "/creator/topup": Gift,
   "/creator/help": LifeBuoy,
 
@@ -190,3 +191,4 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
     </>
   );
 }
+

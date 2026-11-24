@@ -1,4 +1,4 @@
-
+﻿
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 import { OverviewCharts, type OverviewData } from "./overview-charts";
@@ -14,7 +14,7 @@ function getRoleName(roles: unknown): string {
     return (roles[0] as { name?: string } | undefined)?.name || "";
   }
 
-  return (roles as { name?: string } | null)?.name || "";
+  return ((roles as { name?: string } | null)?.name || "").toLowerCase();
 }
 
 async function AdminOverviewContent() {
@@ -39,6 +39,7 @@ async function AdminOverviewContent() {
     profilesCountResult,
     profilesResult,
     rolesResult,
+    creatorProfilesResult,
     pendingTopupsResult,
     pendingWithdrawalsResult,
     topupsResult,
@@ -61,6 +62,10 @@ async function AdminOverviewContent() {
     supabase
       .from("user_roles")
       .select("user_id, roles(name)"),
+
+    supabase
+      .from("creator_profiles")
+      .select("user_id"),
 
     supabase
       .from("topup_requests")
@@ -110,6 +115,7 @@ async function AdminOverviewContent() {
     profilesCountResult.error,
     profilesResult.error,
     rolesResult.error,
+    creatorProfilesResult.error,
     pendingTopupsResult.error,
     pendingWithdrawalsResult.error,
     topupsResult.error,
@@ -135,6 +141,7 @@ async function AdminOverviewContent() {
 
   const totalUsers = profilesCountResult.count || 0;
   const roles = rolesResult.data || [];
+  const creatorProfiles = creatorProfilesResult.data || [];
   const transactions = transactionsResult.data || [];
   const topups = topupsResult.data || [];
   const withdrawals = withdrawalsResult.data || [];
@@ -367,3 +374,7 @@ export default function AdminDashboardPage() {
     </DashboardShell>
   );
 }
+
+
+
+

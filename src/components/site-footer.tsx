@@ -29,15 +29,15 @@ export function SiteFooter() {
             <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link href="/terms" className="hover:text-foreground">Terms</Link>
             <Link href="/contact" className="hover:text-foreground">Contact</Link>
-            <Link href="/earn/auth" className="hover:text-foreground">Create Earning Acc</Link>
-            <Link href="/creator/auth" className="hover:text-foreground">Create Boost Acc</Link>
+            <Link href="/earn/auth" className="hover:text-foreground">Start Earning</Link>
+            <Link href="/creator/auth" className="hover:text-foreground">Boost My Account</Link>
           </nav>
         </div>
 
         <Separator className="my-6" />
 
         <p className="text-center text-[11px] text-muted-foreground">
-          © {year ?? "2026"} {site.name}. All rights reserved.
+          © {year ?? "2026"} {site.name}. All rights reserved.S
         </p>
       </div>
     </footer>

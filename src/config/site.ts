@@ -1,4 +1,4 @@
-
+﻿
 export const site = {
   name: "TikTok Booster",
   shortName: "Booster",
@@ -32,6 +32,7 @@ export const site = {
       { label: "Campaigns", href: "/creator/campaigns" },
       { label: "Analytics", href: "/creator/analytics/audience" },
       { label: "Wallet", href: "/creator/wallet" },
+      { label: "Referral", href: "/creator/referral" },
       { label: "Top Up", href: "/creator/topup" },
       { label: "Help Centre", href: "/creator/help" },
     ],
@@ -56,3 +57,4 @@ export const site = {
 } as const;
 
 export type Site = typeof site;
+
