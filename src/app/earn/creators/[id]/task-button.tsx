@@ -162,7 +162,7 @@ export function TaskButton({
     <div className="w-full space-y-3">
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
         <p className="text-sm font-semibold text-primary">
-          Thank You!! rendered live soon.
+          Thank You!! rendered live.
         </p>
         <Button
           type="button"
