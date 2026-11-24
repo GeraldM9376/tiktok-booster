@@ -162,7 +162,7 @@ export function TaskButton({
     <div className="w-full space-y-3">
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
         <p className="text-sm font-semibold text-primary">
-          Real TikTok Likes and Follows will be rendered live soon.
+          Thank You!! rendered live soon.
         </p>
         <Button
           type="button"
