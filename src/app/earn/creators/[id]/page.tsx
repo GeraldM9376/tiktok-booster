@@ -1,4 +1,4 @@
-// src/app/earn/creators/[id]/page.tsx
+﻿// src/app/earn/creators/[id]/page.tsx
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -66,7 +66,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
         </Avatar>
         <div className="flex-1 text-center md:text-left">
           <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
-            {name} {creator.verified && <span className="text-primary text-xl">✓</span>}
+            {name} {creator.verified && <span className="text-primary text-xl">âœ“</span>}
           </h1>
           <p className="text-muted-foreground">@{username}</p>
           <p className="mt-4 max-w-xl text-sm">{creator.bio}</p>
@@ -94,8 +94,8 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
       </div>
 
-      {/* Client Video List — pass isOnDailyTaskPage to enable earning on likes */}
-      <VideoList videos={videos || []} isOnDailyTaskPage={true} />
+      {/* Client Video List â€” pass isOnDailyTaskPage to enable earning on likes */}
+      <VideoList videos={videos || []} isOnDailyTaskPage={true} isDemo={creator.profile_id === null} />
     </div>
   );
 }

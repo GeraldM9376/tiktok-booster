@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -13,9 +12,11 @@ function stripEmojis(str: string) {
 export function VideoList({
   videos,
   isOnDailyTaskPage = false,
+  isDemo = false,
 }: {
   videos: any[];
   isOnDailyTaskPage?: boolean;
+  isDemo?: boolean;
 }) {
   const [localVideos, setLocalVideos] = useState(videos);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -43,31 +44,20 @@ export function VideoList({
             const isLiked = likedIds.has(video.id);
 
             return (
-              <div
-                key={video.id}
-                className="p-4 flex items-center justify-between gap-4 hover:bg-secondary/50 transition-colors"
-              >
+              <div key={video.id} className="p-4 flex items-center justify-between gap-4 hover:bg-secondary/50 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{cleanTitle}</p>
-                  <p className="text-xs text-muted-foreground truncate font-mono mt-1">
-                    {fakeUrl}
-                  </p>
+                  <p className="text-xs text-muted-foreground truncate font-mono mt-1">{fakeUrl}</p>
                 </div>
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground whitespace-nowrap">
                   <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {video.view_count.toLocaleString()}
-                    </p>
+                    <p className="font-semibold text-foreground">{video.view_count.toLocaleString()}</p>
                     <p className="text-[10px] uppercase">Views</p>
                   </div>
 
                   <div className="text-right">
-                    <p
-                      className={`font-semibold transition-colors duration-300 ${
-                        isLiked ? "text-red-500" : "text-foreground"
-                      }`}
-                    >
+                    <p className={`font-semibold transition-colors duration-300 ${isLiked ? "text-red-500" : "text-foreground"}`}>
                       {video.like_count.toLocaleString()}
                     </p>
                     <p className="text-[10px] uppercase">Likes</p>
@@ -79,7 +69,7 @@ export function VideoList({
                       type="like"
                       isOnDailyTaskPage={isOnDailyTaskPage}
                       onLikeComplete={() => handleLikeComplete(video.id)}
-                      liveUrl={video.video_url}
+                      liveUrl={isDemo ? "/earn/demo-feed" : video.video_url}
                     />
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-
+﻿
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -103,7 +103,7 @@ async function DailyTasksContent() {
 
       {allDone && (
         <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500">
-          🎉 All follow tasks done for today! Click "Earn More" to like videos.
+          ðŸŽ‰ All follow tasks done for today! Click "Earn More" to like videos.
         </div>
       )}
 
@@ -144,7 +144,7 @@ async function DailyTasksContent() {
                       targetId={creator.id}
                       type="follow"
                       isOnDailyTaskPage={true}
-                      liveUrl={creator.tiktok_profile_url}
+                      liveUrl={creator.profile_id === null ? "/earn/demo-feed" : creator.tiktok_profile_url}
                     />
                   </div>
                 </CardContent>
@@ -177,3 +177,4 @@ export default function DailyTasksPage() {
     </DashboardShell>
   );
 }
+

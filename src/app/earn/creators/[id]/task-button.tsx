@@ -1,5 +1,4 @@
-
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -40,15 +39,10 @@ export function TaskButton({
 
     async function checkStatus() {
       const supabase = createClient();
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: todayData } = await supabase.rpc("get_local_date");
-
       const today =
         todayData ||
         new Date(Date.now() + 3 * 60 * 60 * 1000)
@@ -64,31 +58,20 @@ export function TaskButton({
         .eq("day_bucket", today)
         .maybeSingle();
 
-      if (isMounted && data) {
-        setCompleted(true);
-      }
+      if (isMounted && data) setCompleted(true);
     }
 
     checkStatus();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [targetId, type]);
 
   async function handleTask() {
-    if (!isOnDailyTaskPage) {
-      router.push("/earn/tasks/daily");
-      return;
-    }
-
     if (completed || isLoading) return;
 
     setIsLoading(true);
 
     try {
       const supabase = createClient();
-
       const {
         data: { user },
         error: authError,
@@ -99,25 +82,29 @@ export function TaskButton({
         return;
       }
 
-      if (type === "follow") {
-        const { data: activeRank, error: rankError } = await supabase
-          .from("user_ranks")
-          .select("rank_id")
-          .eq("user_id", user.id)
-          .eq("status", "approved")
-          .maybeSingle();
+      // Both Like and Follow require an approved rank.
+      const { data: activeRank, error: rankError } = await supabase
+        .from("user_ranks")
+        .select("rank_id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .maybeSingle();
 
-        if (rankError) {
-          console.error("Rank verification error:", rankError);
-          toast.error("Could not verify your account rank. Please try again.");
-          return;
-        }
+      if (rankError) {
+        console.error("Rank verification error:", rankError);
+        toast.error("Could not verify your account rank. Please try again.");
+        return;
+      }
 
-        if (!activeRank) {
-          toast.error("Choose an account rank before completing follow tasks.");
-          router.push("/earn/rank");
-          return;
-        }
+      if (!activeRank) {
+        toast.error("Choose an account rank before completing tasks.");
+        router.push("/earn/rank");
+        return;
+      }
+
+      if (!isOnDailyTaskPage) {
+        router.push("/earn/tasks/daily");
+        return;
       }
 
       const result = await completeTask(type, targetId);
@@ -126,11 +113,8 @@ export function TaskButton({
         const errorMessage =
           result.error || "Could not complete task. Please try again.";
 
-        if (
-          type === "follow" &&
-          errorMessage.toLowerCase().includes("active rank")
-        ) {
-          toast.error("Choose an account rank before completing follow tasks.");
+        if (errorMessage.toLowerCase().includes("active rank")) {
+          toast.error("Choose an account rank before completing tasks.");
           router.push("/earn/rank");
           return;
         }
@@ -179,12 +163,8 @@ export function TaskButton({
         {showLiveLink && liveUrl && (
           <div className="mt-3">
             <Button asChild size="sm">
-              <a
-                href={liveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Live TikTok
+              <a href={liveUrl} target="_blank" rel="noopener noreferrer">
+                {liveUrl === "/earn/demo-feed" ? "Open TikTok" : "Live TikTok"}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
@@ -206,7 +186,6 @@ export function TaskButton({
               <Check className="mr-2 h-4 w-4" />
               Followed
             </Button>
-
             <Button asChild variant="default" className="shadow-glow">
               <a href={`/earn/creators/${targetId}`}>
                 Earn More
@@ -220,11 +199,7 @@ export function TaskButton({
     }
 
     return (
-      <Button
-        onClick={handleTask}
-        disabled={isLoading}
-        className="w-full shadow-glow"
-      >
+      <Button onClick={handleTask} disabled={isLoading} className="w-full shadow-glow">
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
