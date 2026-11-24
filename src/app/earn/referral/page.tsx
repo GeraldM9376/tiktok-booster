@@ -26,28 +26,30 @@ async function ReferralContent() {
     .maybeSingle();
 
   if (codeError) {
-    return <div className="p-6 text-red-500">Could not load referral code: {codeError.message}</div>;
+    return (
+      <div className="p-6 text-red-500">
+        Could not load referral code: {codeError.message}
+      </div>
+    );
   }
 
   let finalCode = existingCode?.code;
 
   if (!finalCode) {
-    const generatedCode = Math.random()
-      .toString(36)
-      .substring(2, 8)
-      .toUpperCase();
+    const { data: generatedCode, error } = await supabase.rpc(
+      "ensure_referral_code"
+    );
 
-    const { data: insertedCode, error } = await supabase
-      .from("referral_codes")
-      .insert({ user_id: user.id, code: generatedCode })
-      .select("code")
-      .single();
-
-    if (error) {
-      return <div className="p-6 text-red-500">Error generating referral code: {error.message}</div>;
+    if (error || !generatedCode) {
+      return (
+        <div className="p-6 text-red-500">
+          Error generating referral code:{" "}
+          {error?.message ?? "No code returned."}
+        </div>
+      );
     }
 
-    finalCode = insertedCode.code;
+    finalCode = generatedCode;
   }
 
   const referralLink = `${site.url}/earn/auth?ref=${finalCode}`;

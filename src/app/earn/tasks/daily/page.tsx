@@ -1,4 +1,4 @@
-// src/app/earn/tasks/daily/page.tsx
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -22,11 +22,20 @@ function getNicheName(niches: any): string {
 
 async function DailyTasksContent() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) redirect("/earn/auth");
 
   const { data: todayData } = await supabase.rpc("get_local_date");
-  const today = todayData || new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  const today =
+    todayData ||
+    new Date(Date.now() + 3 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   const { data: rankData } = await supabase
     .from("user_ranks")
@@ -35,13 +44,16 @@ async function DailyTasksContent() {
     .eq("status", "approved")
     .maybeSingle();
 
-  const followLimit = (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
-  const rankName = (rankData?.rank_packages as any)?.name || "Unranked";
+  const followLimit =
+    (rankData?.rank_packages as any)?.daily_follow_tasks || 5;
+
+  const rankName =
+    (rankData?.rank_packages as any)?.name || "Unranked";
 
   const { data: creators } = await supabase
     .from("creators")
     .select("*, niches(name)")
-    .limit(50); 
+    .limit(50);
 
   const { data: completed } = await supabase
     .from("completed_tasks")
@@ -50,11 +62,11 @@ async function DailyTasksContent() {
     .eq("task_type", "follow")
     .eq("day_bucket", today);
 
-  const completedIds = completed?.map(c => c.target_id) || [];
+  const completedIds = completed?.map((c) => c.target_id) || [];
   const allDone = completedIds.length >= followLimit;
 
-  // Shuffle creators with today's seed
   const dailySeed = today.replace(/-/g, "").slice(2);
+
   const shuffled = (creators || [])
     .sort((a, b) => {
       const hashA = (parseInt(dailySeed) + a.id.charCodeAt(0)) % 1000;
@@ -67,16 +79,24 @@ async function DailyTasksContent() {
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Daily Follow Tasks</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Daily Follow Tasks
+          </h1>
+
           <p className="mt-2 text-sm text-muted-foreground">
-            You are on the <strong>{rankName}</strong> plan. You can follow up to {followLimit} creators today.
+            You are on the <strong>{rankName}</strong> plan. You can follow up
+            to {followLimit} creators today.
           </p>
         </div>
+
         <div className="glass px-4 py-3 rounded-xl flex items-center gap-3">
           <Clock className="h-5 w-5 text-primary" />
+
           <div>
             <p className="text-xs text-muted-foreground">Resets in</p>
-            <p className="font-mono font-bold text-foreground"><CountdownTimer /></p>
+            <p className="font-mono font-bold text-foreground">
+              <CountdownTimer />
+            </p>
           </div>
         </div>
       </div>
@@ -94,18 +114,38 @@ async function DailyTasksContent() {
               <Card key={creator.id} className="glass overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={resolveAvatar(creator.avatar_url, creator.id)} />
-                    <AvatarFallback>{getRealName(creator.id).slice(0, 2)}</AvatarFallback>
+                    <AvatarImage
+                      src={resolveAvatar(creator.avatar_url, creator.id)}
+                    />
+                    <AvatarFallback>
+                      {getRealName(creator.id).slice(0, 2)}
+                    </AvatarFallback>
                   </Avatar>
+
                   <div>
-                    <Link href={`/earn/creators/${creator.id}`} className="font-bold hover:underline">
+                    <Link
+                      href={`/earn/creators/${creator.id}`}
+                      className="font-bold hover:underline"
+                    >
                       {getRealName(creator.id)}
                     </Link>
-                    <p className="text-xs text-muted-foreground">@{getRealUsername(creator.id, creator.username)}</p>
-                    <p className="text-xs font-medium mt-1 text-primary">{getNicheName(creator.niches)}</p>
+
+                    <p className="text-xs text-muted-foreground">
+                      @{getRealUsername(creator.id, creator.username)}
+                    </p>
+
+                    <p className="text-xs font-medium mt-1 text-primary">
+                      {getNicheName(creator.niches)}
+                    </p>
                   </div>
+
                   <div className="w-full pt-4 border-t">
-                    <TaskButton targetId={creator.id} type="follow" isOnDailyTaskPage={true} />
+                    <TaskButton
+                      targetId={creator.id}
+                      type="follow"
+                      isOnDailyTaskPage={true}
+                      liveUrl={creator.tiktok_profile_url}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -125,7 +165,13 @@ async function DailyTasksContent() {
 export default function DailyTasksPage() {
   return (
     <DashboardShell type="earner" authPath="/earn/auth">
-      <Suspense fallback={<div className="flex h-[50vh] w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex h-[50vh] w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        }
+      >
         <DailyTasksContent />
       </Suspense>
     </DashboardShell>

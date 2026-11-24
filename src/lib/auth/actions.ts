@@ -149,23 +149,7 @@ export async function signup(
       }
     }
 
-    // Generate the user's referral code.
-    const newRefCode = Math.random()
-      .toString(36)
-      .substring(2, 8)
-      .toUpperCase();
-
-    const { error: codeError } = await supabase
-      .from("referral_codes")
-      .insert({
-        user_id: userId,
-        code: newRefCode,
-      });
-
-    if (codeError) {
-      console.error("referral_codes insert:", codeError.message);
-    }
-
+    // Referral code is generated automatically by handle_new_user().
     // Save the referring user when a referral exists.
     if (data.ref) {
       const { data: refRow } = await supabase

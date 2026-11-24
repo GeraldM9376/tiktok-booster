@@ -12,18 +12,25 @@ import { createClient } from "@/lib/supabase/client";
 type SettingsFormProps = {
   initialPaybill: string;
   initialAccount: string;
+  initialSupportEmail: string;
+  initialSupportWhatsApp: string;
 };
 
 export function SettingsForm({
   initialPaybill,
   initialAccount,
+  initialSupportEmail,
+  initialSupportWhatsApp,
 }: SettingsFormProps) {
   const [paybill, setPaybill] = useState(initialPaybill);
   const [account, setAccount] = useState(initialAccount);
-  const [isLoading, setIsLoading] = useState(false);
+  const [supportEmail, setSupportEmail] = useState(initialSupportEmail);
+  const [supportWhatsApp, setSupportWhatsApp] = useState(initialSupportWhatsApp);
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
+  const [isSavingSupport, setIsSavingSupport] = useState(false);
   const router = useRouter();
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSavePayment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const cleanPaybill = paybill.trim();
@@ -34,7 +41,7 @@ export function SettingsForm({
       return;
     }
 
-    setIsLoading(true);
+    setIsSavingPayment(true);
 
     try {
       const supabase = createClient();
@@ -49,9 +56,6 @@ export function SettingsForm({
         return;
       }
 
-      setPaybill(cleanPaybill);
-      setAccount(cleanAccount);
-
       toast.success("Payment settings saved successfully.");
       router.refresh();
     } catch (error) {
@@ -61,42 +65,131 @@ export function SettingsForm({
           : "Failed to save payment settings."
       );
     } finally {
-      setIsLoading(false);
+      setIsSavingPayment(false);
+    }
+  }
+
+  async function handleSaveSupport(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const cleanEmail = supportEmail.trim();
+    const cleanWhatsApp = supportWhatsApp.trim();
+
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error("Enter a valid support email address.");
+      return;
+    }
+
+    if (cleanWhatsApp && !/^\+?[0-9\s()-]{7,20}$/.test(cleanWhatsApp)) {
+      toast.error("Enter a valid WhatsApp number with country code.");
+      return;
+    }
+
+    setIsSavingSupport(true);
+
+    try {
+      const supabase = createClient();
+
+      const { error } = await supabase.rpc("update_support_settings", {
+        p_support_email: cleanEmail,
+        p_support_whatsapp: cleanWhatsApp,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Support contacts saved successfully.");
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save support contacts."
+      );
+    } finally {
+      setIsSavingSupport(false);
     }
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="paybill">M-Pesa Paybill Number</Label>
-        <Input
-          id="paybill"
-          value={paybill}
-          onChange={(e) => setPaybill(e.target.value)}
-          placeholder="Enter Paybill number"
-          required
-          disabled={isLoading}
-        />
-        <p className="text-xs text-muted-foreground">
-          This appears on the payment instructions page.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <form onSubmit={handleSavePayment} className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold">Payment Settings</h2>
+          <p className="text-sm text-muted-foreground">
+            Configure the M-Pesa payment instructions shown to users.
+          </p>
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="account">M-Pesa Account Number</Label>
-        <Input
-          id="account"
-          value={account}
-          onChange={(e) => setAccount(e.target.value)}
-          placeholder="Enter account number"
-          required
-          disabled={isLoading}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="paybill">M-Pesa Paybill Number</Label>
+          <Input
+            id="paybill"
+            value={paybill}
+            onChange={(e) => setPaybill(e.target.value)}
+            placeholder="Enter Paybill number"
+            required
+            disabled={isSavingPayment}
+          />
+        </div>
 
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Saving..." : "Save Settings"}
-      </Button>
-    </form>
+        <div className="space-y-2">
+          <Label htmlFor="account">M-Pesa Account Number</Label>
+          <Input
+            id="account"
+            value={account}
+            onChange={(e) => setAccount(e.target.value)}
+            placeholder="Enter account number"
+            required
+            disabled={isSavingPayment}
+          />
+        </div>
+
+        <Button type="submit" disabled={isSavingPayment}>
+          {isSavingPayment ? "Saving..." : "Save Payment Settings"}
+        </Button>
+      </form>
+
+      <div className="border-t" />
+
+      <form onSubmit={handleSaveSupport} className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold">Creator Support Contacts</h2>
+          <p className="text-sm text-muted-foreground">
+            These contacts appear in the Creator Help Centre. Leave a field
+            empty to hide that contact option.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="support-email">Support Email</Label>
+          <Input
+            id="support-email"
+            type="email"
+            value={supportEmail}
+            onChange={(e) => setSupportEmail(e.target.value)}
+            placeholder="support@example.com"
+            disabled={isSavingSupport}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="support-whatsapp">Support WhatsApp Number</Label>
+          <Input
+            id="support-whatsapp"
+            value={supportWhatsApp}
+            onChange={(e) => setSupportWhatsApp(e.target.value)}
+            placeholder="+2547XXXXXXXX"
+            disabled={isSavingSupport}
+          />
+        </div>
+
+        <Button type="submit" disabled={isSavingSupport}>
+          {isSavingSupport ? "Saving..." : "Save Support Contacts"}
+        </Button>
+      </form>
+    </div>
   );
 }

@@ -9,9 +9,7 @@ import { SettingsForm } from "./settings-form";
 export const dynamic = "force-dynamic";
 
 function settingToString(value: unknown, fallback: string): string {
-  if (typeof value === "string" && value.trim()) {
-    return value;
-  }
+  if (typeof value === "string") return value;
 
   if (typeof value === "number" && Number.isFinite(value)) {
     return String(value);
@@ -32,7 +30,12 @@ async function SettingsContent() {
   const { data: settings, error } = await supabase
     .from("platform_settings")
     .select("key, value")
-    .in("key", ["payment_paybill", "payment_account"]);
+    .in("key", [
+      "payment_paybill",
+      "payment_account",
+      "support_email",
+      "support_whatsapp",
+    ]);
 
   if (error) {
     return (
@@ -41,22 +44,17 @@ async function SettingsContent() {
           System Settings
         </h1>
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5 text-red-500">
-          Failed to load payment settings: {error.message}
+          Failed to load settings: {error.message}
         </div>
       </div>
     );
   }
 
-  const paybillValue = settings?.find(
-    (setting) => setting.key === "payment_paybill"
-  )?.value;
-
-  const accountValue = settings?.find(
-    (setting) => setting.key === "payment_account"
-  )?.value;
-
-  const paybill = settingToString(paybillValue, "400200");
-  const account = settingToString(accountValue, "TIKTOKBOOSTER");
+  const getValue = (key: string, fallback: string) =>
+    settingToString(
+      settings?.find((setting) => setting.key === key)?.value,
+      fallback
+    );
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -65,14 +63,16 @@ async function SettingsContent() {
           System Settings
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Manage global platform configuration and payment details.
+          Manage payment instructions and Creator support contacts.
         </p>
       </div>
 
       <div className="glass rounded-xl p-6">
         <SettingsForm
-          initialPaybill={paybill}
-          initialAccount={account}
+          initialPaybill={getValue("payment_paybill", "400200")}
+          initialAccount={getValue("payment_account", "TIKTOKBOOSTER")}
+          initialSupportEmail={getValue("support_email", "")}
+          initialSupportWhatsApp={getValue("support_whatsapp", "")}
         />
       </div>
     </div>

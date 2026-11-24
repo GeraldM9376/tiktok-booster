@@ -1,4 +1,4 @@
-// src/app/earn/creators/[id]/video-list.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -10,13 +10,17 @@ function stripEmojis(str: string) {
   return str.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
 }
 
-export function VideoList({ videos, isOnDailyTaskPage = false }: { videos: any[], isOnDailyTaskPage?: boolean }) {
-  // Local state to allow instant UI updates
+export function VideoList({
+  videos,
+  isOnDailyTaskPage = false,
+}: {
+  videos: any[];
+  isOnDailyTaskPage?: boolean;
+}) {
   const [localVideos, setLocalVideos] = useState(videos);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
   const handleLikeComplete = (videoId: string) => {
-    // Instantly increment the like count and mark as liked
     setLocalVideos((prev) =>
       prev.map((v) =>
         v.id === videoId ? { ...v, like_count: v.like_count + 1 } : v
@@ -49,6 +53,7 @@ export function VideoList({ videos, isOnDailyTaskPage = false }: { videos: any[]
                     {fakeUrl}
                   </p>
                 </div>
+
                 <div className="flex items-center gap-6 text-sm text-muted-foreground whitespace-nowrap">
                   <div className="text-right">
                     <p className="font-semibold text-foreground">
@@ -56,6 +61,7 @@ export function VideoList({ videos, isOnDailyTaskPage = false }: { videos: any[]
                     </p>
                     <p className="text-[10px] uppercase">Views</p>
                   </div>
+
                   <div className="text-right">
                     <p
                       className={`font-semibold transition-colors duration-300 ${
@@ -66,12 +72,14 @@ export function VideoList({ videos, isOnDailyTaskPage = false }: { videos: any[]
                     </p>
                     <p className="text-[10px] uppercase">Likes</p>
                   </div>
+
                   <div className="pl-4 border-l border-border">
                     <TaskButton
                       targetId={video.id}
                       type="like"
                       isOnDailyTaskPage={isOnDailyTaskPage}
                       onLikeComplete={() => handleLikeComplete(video.id)}
+                      liveUrl={video.video_url}
                     />
                   </div>
                 </div>

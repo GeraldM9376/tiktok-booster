@@ -1,4 +1,4 @@
-// src/config/site.ts
+
 export const site = {
   name: "TikTok Booster",
   shortName: "Booster",
@@ -8,7 +8,7 @@ export const site = {
   url: "https://tiktok-booster-orpin.vercel.app",
   links: {
     github: "https://github.com",
-    support: "mailto:support@tiktok-booster.example",
+    support: "",
   },
   nav: {
     marketing: [
@@ -33,6 +33,7 @@ export const site = {
       { label: "Analytics", href: "/creator/analytics/audience" },
       { label: "Wallet", href: "/creator/wallet" },
       { label: "Top Up", href: "/creator/topup" },
+      { label: "Help Centre", href: "/creator/help" },
     ],
     admin: [
       { label: "Overview", href: "/admin/dashboard" },
@@ -42,6 +43,7 @@ export const site = {
       { label: "Transactions", href: "/admin/transactions" },
       { label: "Top-Ups", href: "/admin/topups" },
       { label: "Withdrawals", href: "/admin/withdrawals" },
+      { label: "Support", href: "/admin/support" },
       { label: "Audit", href: "/admin/audit" },
       { label: "Settings", href: "/admin/settings" },
     ],

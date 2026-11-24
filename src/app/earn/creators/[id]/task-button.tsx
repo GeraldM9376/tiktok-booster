@@ -4,7 +4,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Heart, UserPlus, Check, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Heart,
+  UserPlus,
+  Check,
+  ArrowRight,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { completeTask } from "@/lib/services/tasks";
 import { Button } from "@/components/ui/button";
@@ -15,14 +22,17 @@ export function TaskButton({
   type,
   isOnDailyTaskPage = false,
   onLikeComplete,
+  liveUrl,
 }: {
   targetId: string;
   type: "follow" | "like";
   isOnDailyTaskPage?: boolean;
   onLikeComplete?: () => void;
+  liveUrl?: string | null;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showLiveLink, setShowLiveLink] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -89,7 +99,6 @@ export function TaskButton({
         return;
       }
 
-      // Require an approved rank before allowing follow tasks.
       if (type === "follow") {
         const { data: activeRank, error: rankError } = await supabase
           .from("user_ranks")
@@ -132,6 +141,7 @@ export function TaskButton({
       }
 
       setCompleted(true);
+      setShowLiveLink(false);
 
       if (type === "like" && onLikeComplete) {
         onLikeComplete();
@@ -148,24 +158,63 @@ export function TaskButton({
     }
   }
 
+  const postTaskContent = (
+    <div className="w-full space-y-3">
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
+        <p className="text-sm font-semibold text-primary">
+          Real TikTok Likes and Follows will be rendered live soon.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          disabled={!liveUrl}
+          onClick={() => setShowLiveLink((value) => !value)}
+        >
+          View on TikTok
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </Button>
+
+        {showLiveLink && liveUrl && (
+          <div className="mt-3">
+            <Button asChild size="sm">
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Live TikTok
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   if (type === "follow") {
     if (completed) {
       return (
-        <div className="flex items-center gap-2 w-full">
-          <Button
-            disabled
-            className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/20"
-          >
-            <Check className="mr-2 h-4 w-4" />
-            Followed
-          </Button>
+        <div className="w-full space-y-3">
+          <div className="flex items-center gap-2">
+            <Button
+              disabled
+              className="flex-1 bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/20"
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Followed
+            </Button>
 
-          <Button asChild variant="default" className="shadow-glow">
-            <a href={`/earn/creators/${targetId}`}>
-              Earn More
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
+            <Button asChild variant="default" className="shadow-glow">
+              <a href={`/earn/creators/${targetId}`}>
+                Earn More
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+          {postTaskContent}
         </div>
       );
     }
@@ -188,23 +237,30 @@ export function TaskButton({
     );
   }
 
+  if (completed) {
+    return (
+      <div className="w-64 max-w-full">
+        <div className="flex items-center justify-center gap-2 text-red-500 font-semibold mb-3">
+          <Check className="h-4 w-4" />
+          Liked
+        </div>
+        {postTaskContent}
+      </div>
+    );
+  }
+
   return (
     <motion.button
       whileTap={{ scale: 0.7 }}
       onClick={handleTask}
-      disabled={completed || isLoading}
-      className={`p-2 rounded-full transition-colors ${
-        completed
-          ? "text-red-500 bg-red-500/10"
-          : "text-green-500 hover:bg-green-500/10"
-      }`}
+      disabled={isLoading}
+      className="p-2 rounded-full transition-colors text-green-500 hover:bg-green-500/10"
     >
-      <motion.div
-        animate={completed ? { scale: [1, 1.5, 1] } : {}}
-        transition={{ duration: 0.3 }}
-      >
-        <Heart className={`h-5 w-5 ${completed ? "fill-red-500" : ""}`} />
-      </motion.div>
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin" />
+      ) : (
+        <Heart className="h-5 w-5" />
+      )}
     </motion.button>
   );
 }

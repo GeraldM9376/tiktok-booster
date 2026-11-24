@@ -1,4 +1,4 @@
-// src/components/layout/sidebar.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -24,6 +24,7 @@ import {
   Receipt,
   LogOut,
   X,
+  LifeBuoy,
 } from "lucide-react";
 
 import { site } from "@/config/site";
@@ -41,17 +42,21 @@ const ICONS: Record<string, React.ElementType> = {
   "/earn/rank": Trophy,
   "/earn/referral": Gift,
   "/earn/payment-settings": Settings,
+
   "/creator/dashboard": LayoutDashboard,
   "/creator/videos": Video,
   "/creator/campaigns": Megaphone,
   "/creator/analytics/audience": BarChart3,
   "/creator/wallet": Wallet,
   "/creator/topup": Gift,
+  "/creator/help": LifeBuoy,
+
   "/admin/dashboard": ShieldCheck,
   "/admin/users": UserCog,
   "/admin/topups": Receipt,
   "/admin/withdrawals": Wallet,
   "/admin/audit": Settings,
+  "/admin/support": LifeBuoy,
 };
 
 interface SidebarProps {
@@ -79,16 +84,23 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
             <Logo collapsed={collapsed} />
           </div>
         )}
+
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:block rounded-md p-1.5 hover:bg-sidebar-accent"
+          className="hidden rounded-md p-1.5 hover:bg-sidebar-accent md:block"
           aria-label="Toggle sidebar"
         >
-          {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <Menu className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
+
         <button
           onClick={onClose}
-          className="md:hidden rounded-md p-1.5 hover:bg-sidebar-accent"
+          className="rounded-md p-1.5 hover:bg-sidebar-accent md:hidden"
+          aria-label="Close sidebar"
         >
           <X className="h-5 w-5" />
         </button>
@@ -98,7 +110,10 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
         <ul className="space-y-1">
           {nav.map((item) => {
             const Icon = ICONS[item.href] || ListTodo;
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const active =
+              pathname === item.href ||
+              pathname.startsWith(item.href + "/");
+
             return (
               <li key={item.href}>
                 <Link
@@ -126,7 +141,7 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
             <form action={signOut}>
               <button
                 type="submit"
-                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-500/80 transition-colors hover:bg-red-500/10 hover:text-red-500"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 <span>Log Out</span>
@@ -159,6 +174,7 @@ export function Sidebar({ type, isOpen, onClose }: SidebarProps) {
               onClick={onClose}
               className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
             />
+
             <motion.aside
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
