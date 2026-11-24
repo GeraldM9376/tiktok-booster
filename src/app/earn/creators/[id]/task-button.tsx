@@ -172,7 +172,7 @@ export function TaskButton({
           disabled={!liveUrl}
           onClick={() => setShowLiveLink((value) => !value)}
         >
-          View on TikTok
+          Click Earn More
           <ExternalLink className="ml-2 h-4 w-4" />
         </Button>
 
