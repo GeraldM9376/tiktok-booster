@@ -1,12 +1,12 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  Search, Home, Compass, Users, Film, MessageCircle,
-  PlusSquare, UserCircle, Music2, Heart, MessageSquare,
-  Share2, Bookmark, WifiOff, X, Send, ArrowLeft,
-  RefreshCw, Play, MoreHorizontal, ImagePlus,
+  Search, Home, Compass, Users, MessageCircle, PlusSquare,
+  UserCircle, Music2, Heart, MessageSquare, Share2, Bookmark,
+  WifiOff, X, Send, RefreshCw, Play, Film, Bell, Settings,
+  ChevronDown, Loader2, Grid3X3, Menu,
 } from "lucide-react";
 
 const base = "/earn/demo-feed";
@@ -26,122 +26,103 @@ const categories = [
   "Anime & Comics", "Relationship", "Shows", "Lifestyle",
 ];
 
-const videos = [
-  {
-    id: 1, creator: "maya.rose", name: "Maya Rose",
-    caption: "Little moments make the biggest memories ✨",
-    tags: "#lifestyle #dailyvlog", likes: "24.8K", comments: "438",
-    image: "photo-1534528741775-53994a69daeb",
-  },
-  {
-    id: 2, creator: "kevincreates", name: "Kevin Creates",
-    caption: "Wait for the final result 😂",
-    tags: "#comedy #funny", likes: "18.2K", comments: "291",
-    image: "photo-1500648767791-00dcc994a43e",
-  },
-  {
-    id: 3, creator: "nina.daily", name: "Nina",
-    caption: "A little sunshine for your day ☀️",
-    tags: "#travel #beautiful", likes: "56.1K", comments: "892",
-    image: "photo-1524504388940-b1c1722653e1",
-  },
-  {
-    id: 4, creator: "alexmoves", name: "Alex Moves",
-    caption: "Never skip your practice 💪",
-    tags: "#fitness #motivation", likes: "9,842", comments: "127",
-    image: "photo-1506794778202-cad84cf45f1d",
-  },
-  {
-    id: 5, creator: "sarah.vibes", name: "Sarah Vibes",
-    caption: "Today's outfit inspiration 🌸",
-    tags: "#fashion #style", likes: "31.4K", comments: "564",
-    image: "photo-1515886657613-9f3515b0c78f",
-  },
-  {
-    id: 6, creator: "daniel.jpg", name: "Daniel",
-    caption: "Somewhere I'd rather be 🌍",
-    tags: "#adventure #nature", likes: "12.7K", comments: "203",
-    image: "photo-1517841905240-472988babdf9",
-  },
-  {
-    id: 7, creator: "luna.music", name: "Luna Music",
-    caption: "This song is stuck in my head 🎵",
-    tags: "#music #singing", likes: "42.3K", comments: "718",
-    image: "photo-1531123897727-8f129e1688ce",
-  },
-  {
-    id: 8, creator: "chrisworld", name: "Chris World",
-    caption: "Weekend adventures with friends",
-    tags: "#friends #weekend", likes: "7,621", comments: "94",
-    image: "photo-1529139574466-a303027c1d8b",
-  },
-];
-
-const people = [
-  { name: "Maya Rose", username: "@maya.rose", image: videos[0].image },
-  { name: "Kevin Creates", username: "@kevincreates", image: videos[1].image },
-  { name: "Nina", username: "@nina.daily", image: videos[2].image },
-  { name: "Alex Moves", username: "@alexmoves", image: videos[3].image },
-  { name: "Sarah Vibes", username: "@sarah.vibes", image: videos[4].image },
-];
-
-function imageUrl(id: string) {
-  return `https://images.unsplash.com/${id}?auto=format&fit=crop&w=650&q=80`;
-}
-
-function shuffle<T,>(items: T[]): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-function Avatar({ image, size = "h-11 w-11" }: {
-  image: string; size?: string;
-}) {
+function Skeleton({ className = "" }: { className?: string }) {
   return (
-    <div
-      className={`${size} shrink-0 rounded-full bg-[#292929] bg-cover bg-center ring-1 ring-white/20`}
-      style={{ backgroundImage: `url("${imageUrl(image)}")` }}
-    />
+    <div className={`animate-pulse rounded-md bg-[#303030] ${className}`} />
   );
 }
 
-function NetworkNotice({ notice, loadingAction }: {
-  notice: string;
-  loadingAction: string;
-}) {
-  if (loadingAction) {
-    return (
-      <div className="fixed bottom-20 left-1/2 z-[80] w-[90%] max-w-sm -translate-x-1/2 rounded-xl border border-[#454545] bg-[#191919] px-4 py-4 shadow-xl">
-        <div className="mb-4 flex items-center gap-2 text-sm text-gray-300">
-          <RefreshCw className="h-4 w-4 animate-spin text-pink-400" />
-          Loading {loadingAction.toLowerCase()}...
-        </div>
-        <div className="space-y-3">
-          <div className="h-3 w-3/4 animate-pulse rounded bg-[#383838]" />
-          <div className="h-3 w-full animate-pulse rounded bg-[#303030]" />
-          <div className="h-3 w-2/3 animate-pulse rounded bg-[#383838]" />
-        </div>
-        <div className="mt-3 flex gap-2">
-          <div className="h-2 w-8 animate-pulse rounded bg-[#444]" />
-          <div className="h-2 w-12 animate-pulse rounded bg-[#333]" />
-          <div className="h-2 w-6 animate-pulse rounded bg-[#444]" />
-        </div>
-      </div>
-    );
-  }
+function AvatarSkeleton({ size = "h-11 w-11" }: { size?: string }) {
+  return (
+    <div className={`${size} shrink-0 animate-pulse rounded-full border border-white/10 bg-[#292929]`} />
+  );
+}
 
-  if (!notice) return null;
+function NetworkNotice({ message }: { message: string }) {
+  if (!message) return null;
 
   return (
-    <div className="fixed bottom-20 left-1/2 z-[80] w-[90%] max-w-sm -translate-x-1/2 rounded-xl border border-[#454545] bg-[#242424] px-4 py-3 text-center text-sm text-white shadow-xl">
+    <div className="fixed bottom-20 left-1/2 z-[100] w-[90%] max-w-sm -translate-x-1/2 rounded-xl border border-white/10 bg-[#242424] px-4 py-3 text-center text-sm text-white shadow-2xl">
       <div className="flex items-center justify-center gap-2">
-        <WifiOff className="h-4 w-4 text-yellow-400" />
-        {notice}
+        <WifiOff className="h-4 w-4 shrink-0 text-yellow-400" />
+        {message}
       </div>
+    </div>
+  );
+}
+
+function LoadingOverlay({ action }: { action: string }) {
+  if (!action) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-5 backdrop-blur-[2px]">
+      <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-[#191919] p-5 shadow-2xl">
+        <div className="mb-5 flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-pink-400" />
+          <span className="text-sm font-semibold text-gray-200">
+            {action}...
+          </span>
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+          <Skeleton className="h-3 w-2/3" />
+          <Skeleton className="mt-5 h-24 w-full rounded-lg" />
+        </div>
+        <p className="mt-4 text-center text-xs text-gray-500">
+          Connecting...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function VideoPlaceholder({ large = false }: { large?: boolean }) {
+  return (
+    <div className={`relative overflow-hidden bg-[#101010] ${large ? "h-full min-h-[420px] w-full" : "aspect-[9/16] w-full"}`}>
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#171717] via-[#080808] to-[#202020]" />
+      <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,0.035)_45%,transparent_70%)] bg-[length:200%_100%] animate-pulse" />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/30">
+          <Play className="h-7 w-7 fill-white/30 text-white/40" />
+        </div>
+        <p className="mt-4 whitespace-nowrap text-center text-xs text-white/30">
+          Loading video...
+        </p>
+      </div>
+      <div className="absolute bottom-5 left-4 right-16 space-y-3">
+        <Skeleton className="h-3 w-32 bg-white/10" />
+        <Skeleton className="h-3 w-4/5 bg-white/10" />
+        <Skeleton className="h-3 w-2/3 bg-white/10" />
+      </div>
+    </div>
+  );
+}
+
+function FeedActions({ onAction }: { onAction: (action: string) => void }) {
+  return (
+    <div className="flex flex-col items-center gap-5">
+      <button onClick={() => onAction("Like")} className="flex flex-col items-center gap-1">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#292929]">
+          <Heart className="h-6 w-6" />
+        </span>
+        <span className="text-[10px] text-gray-400">--</span>
+      </button>
+      <button onClick={() => onAction("Comments")} className="flex flex-col items-center gap-1">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#292929]">
+          <MessageSquare className="h-6 w-6" />
+        </span>
+        <span className="text-[10px] text-gray-400">--</span>
+      </button>
+      <button onClick={() => onAction("Share")} className="flex flex-col items-center gap-1">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#292929]">
+          <Share2 className="h-6 w-6" />
+        </span>
+        <span className="text-[10px] text-gray-400">Share</span>
+      </button>
+      <button onClick={() => onAction("Save")} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#292929]">
+        <Bookmark className="h-6 w-6" />
+      </button>
     </div>
   );
 }
@@ -151,113 +132,119 @@ export default function DemoFeedClient({
 }: {
   initialSection?: string;
 }) {
-  const [section, setSection] = useState(initialSection);
-  const [feed, setFeed] = useState(videos);
+  const [section, setSection] = useState(initialSection.toLowerCase());
+  const [pageLoading, setPageLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState("");
+  const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [loadingAction, setLoadingAction] = useState("");
   const [panel, setPanel] = useState<"comments" | "share" | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<(typeof videos)[number] | null>(null);
-  const [comment, setComment] = useState("");
-  const [retrying, setRetrying] = useState(false);
   const [caption, setCaption] = useState("");
+  const [retrying, setRetrying] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
 
   useEffect(() => {
     setSection(initialSection.toLowerCase());
-    setFeed(shuffle(videos));
-    setQuery("");
-    setSearched(false);
+    setPageLoading(true);
     setNotice("");
+    setLoadingAction("");
+    setSearched(false);
     setPanel(null);
+
+    const timer = setTimeout(() => setPageLoading(false), 1800);
+    return () => clearTimeout(timer);
   }, [initialSection]);
 
-  const showNotice = (message: string) => {
-    setNotice(message);
-    setTimeout(() => setNotice(""), 3200);
-  };
+  const runAction = (action: string) => {
+    if (loadingAction) return;
 
-  const attemptAction = (action: string) => {
     setNotice("");
+    setPanel(null);
     setLoadingAction(action);
 
     setTimeout(() => {
       setLoadingAction("");
-      if (action === "Search") {
+      if (action.toLowerCase().includes("search")) {
         setSearched(true);
-        showNotice("Couldn't load search results. Check your connection.");
+        setNotice("Couldn't load results. Check your connection and try again.");
       } else {
-        showNotice(`Connection interrupted. ${action} was not sent.`);
+        setNotice(`Connection interrupted. ${action} was not sent.`);
       }
-    }, 1700);
+
+      setTimeout(() => setNotice(""), 3800);
+    }, 2200);
   };
 
   const retry = () => {
+    if (retrying || loadingAction) return;
+    setRetrying(true);
     setNotice("");
     setLoadingAction("Reconnecting");
 
     setTimeout(() => {
       setLoadingAction("");
-      showNotice("Connection is still unstable. Please try again.");
-    }, 1700);
+      setRetrying(false);
+      setNotice("Connection is still unstable. Please try again.");
+      setTimeout(() => setNotice(""), 3800);
+    }, 2400);
   };
 
-  const search = (event: React.FormEvent) => {
+  const search = (event: FormEvent) => {
     event.preventDefault();
     if (!query.trim()) return;
     setSearched(false);
-    attemptAction("Search");
+    runAction("Searching");
   };
 
-  const openComments = (video: (typeof videos)[number]) => {
-    setSelectedVideo(video);
-    setPanel("comments");
-  };
-
-  const title = section === "home" ? "For You"
-    : section === "search" ? "Search"
-    : section === "explore" ? "Discover"
-    : section === "friends" ? "Friends"
-    : section === "inbox" ? "Inbox"
-    : section === "create" ? "Create"
-    : section === "profile" ? "Profile"
-    : categories.find(c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-") === section) || "Discover";
+  const title =
+    section === "home" ? "For You" :
+    section === "search" ? "Search" :
+    section === "explore" ? "Discover" :
+    section === "friends" ? "Friends" :
+    section === "inbox" ? "Inbox" :
+    section === "create" ? "Create" :
+    section === "profile" ? "Profile" :
+    categories.find(c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-") === section) || "Discover";
 
   const isCategory = !navItems.some(item => item.id === section);
 
   return (
-    <div className="relative -m-4 min-h-screen overflow-hidden bg-black text-white md:-m-6">
-      {/* Top navigation */}
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-black/95 px-4 backdrop-blur md:px-7">
-        <Link href={`${base}/home`} className="flex items-center gap-2">
-          <Music2 className="h-7 w-7 text-pink-500" />
-          <span className="text-xl font-black tracking-tight">TikTok</span>
-        </Link>
+    <div className="relative -m-4 min-h-screen overflow-x-hidden bg-black text-white md:-m-6">
 
-        <div className="hidden items-center gap-2 rounded-full bg-[#252525] px-3 py-2 text-xs text-gray-300 sm:flex">
-          <WifiOff className="h-4 w-4 text-yellow-400" />
-          Unstable connection
+      {/* Header */}
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-white/10 bg-black/95 px-3 backdrop-blur-xl sm:h-16 sm:px-5">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setMobileMenu(!mobileMenu)} className="rounded-lg p-2 hover:bg-[#242424] md:hidden">
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link href={`${base}/home`} className="flex items-center gap-2">
+            <Music2 className="h-7 w-7 text-pink-500" />
+            <span className="text-xl font-black tracking-tight">TikTok</span>
+          </Link>
         </div>
 
-        <button
-          onClick={retry}
-          className="flex items-center gap-2 rounded-full px-3 py-2 text-sm text-gray-300 hover:bg-[#242424]"
-        >
+        <div className="hidden items-center gap-2 rounded-full bg-[#222] px-4 py-2 text-xs text-gray-400 sm:flex">
+          <WifiOff className="h-4 w-4 text-yellow-400" />
+          Weak network
+        </div>
+
+        <button onClick={retry} disabled={retrying || !!loadingAction} className="flex items-center gap-2 rounded-full px-3 py-2 text-sm text-gray-300 hover:bg-[#242424] disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${retrying ? "animate-spin" : ""}`} />
           <span className="hidden sm:inline">Retry</span>
         </button>
       </header>
 
       <div className="mx-auto flex max-w-[1500px]">
-        {/* Sidebar */}
-        <aside className="sticky top-16 hidden h-[calc(100vh-64px)] w-[225px] shrink-0 flex-col border-r border-white/10 px-3 py-5 md:flex">
+
+        {/* Desktop navigation */}
+        <aside className="sticky top-14 hidden h-[calc(100vh-56px)] w-[220px] shrink-0 flex-col border-r border-white/10 px-3 py-5 md:flex lg:w-[245px]">
           <nav className="space-y-2">
             {navItems.map(({ id, label, icon: Icon }) => (
               <Link
                 key={id}
                 href={`${base}/${id}`}
-                className={`flex items-center gap-4 rounded-lg px-4 py-3 font-semibold transition hover:bg-[#242424] ${
-                  section === id ? "bg-[#242424] text-pink-400" : "text-gray-200"
+                className={`flex items-center gap-4 rounded-lg px-4 py-3 font-semibold transition hover:bg-[#222] ${
+                  section === id ? "bg-[#222] text-pink-400" : "text-gray-200"
                 }`}
               >
                 <Icon className="h-6 w-6" />
@@ -265,9 +252,28 @@ export default function DemoFeedClient({
               </Link>
             ))}
           </nav>
+
+          <div className="mt-7 border-t border-white/10 pt-5">
+            <p className="mb-4 px-3 text-xs font-bold uppercase tracking-wider text-gray-500">
+              Discover
+            </p>
+            {categories.slice(1, 5).map(category => (
+              <Link
+                key={category}
+                href={`${base}/${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                className="block rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-[#222] hover:text-white"
+              >
+                {category}
+              </Link>
+            ))}
+          </div>
+
           <div className="mt-auto border-t border-white/10 pt-4 text-xs text-gray-500">
-            Connection quality: Poor
-            <div className="mt-2 flex gap-1">
+            <div className="flex items-center gap-2">
+              <WifiOff className="h-4 w-4 text-yellow-500" />
+              Connection quality: Poor
+            </div>
+            <div className="mt-3 flex gap-1">
               <span className="h-1.5 w-5 rounded bg-yellow-500" />
               <span className="h-1.5 w-5 rounded bg-[#444]" />
               <span className="h-1.5 w-5 rounded bg-[#444]" />
@@ -275,56 +281,112 @@ export default function DemoFeedClient({
           </div>
         </aside>
 
-        {/* Main page */}
-        <main className="min-w-0 flex-1 px-3 pb-24 sm:px-5 md:px-8">
-          <div className="mx-auto max-w-4xl">
+        {/* Mobile menu */}
+        {mobileMenu && (
+          <div className="fixed inset-0 z-[60] bg-black/80 md:hidden" onClick={() => setMobileMenu(false)}>
+            <aside className="h-full w-[280px] border-r border-white/10 bg-[#111] p-4" onClick={e => e.stopPropagation()}>
+              <div className="mb-6 flex items-center justify-between">
+                <span className="text-lg font-bold">Menu</span>
+                <button onClick={() => setMobileMenu(false)}><X className="h-5 w-5" /></button>
+              </div>
+              {navItems.map(({ id, label, icon: Icon }) => (
+                <Link key={id} href={`${base}/${id}`} onClick={() => setMobileMenu(false)} className="flex items-center gap-4 rounded-lg px-3 py-4 text-gray-200 hover:bg-[#252525]">
+                  <Icon className="h-5 w-5" />{label}
+                </Link>
+              ))}
+            </aside>
+          </div>
+        )}
+
+        {/* Main content */}
+        <main className="min-w-0 flex-1 px-0 pb-20 md:px-5 lg:px-8">
+          <div className="mx-auto max-w-[1050px]">
+
+            {/* Home feed */}
             {section === "home" && (
-              <>
-                <div className="sticky top-16 z-30 flex justify-center gap-8 border-b border-white/10 bg-black/95 py-4 text-sm font-semibold">
+              <div className="mx-auto max-w-[950px]">
+                <div className="sticky top-14 z-30 flex justify-center gap-8 border-b border-white/10 bg-black/95 py-4 text-sm font-semibold md:top-16">
                   <button className="border-b-2 border-white pb-2">For You</button>
-                  <button onClick={() => attemptAction("Following feed")} className="pb-2 text-gray-500 hover:text-white">Following</button>
-                  <button onClick={() => attemptAction("LIVE feed")} className="pb-2 text-gray-500 hover:text-white">LIVE</button>
+                  <button onClick={() => runAction("Following feed")} className="pb-2 text-gray-500">Following</button>
+                  <button onClick={() => runAction("LIVE feed")} className="pb-2 text-gray-500">LIVE</button>
                 </div>
-                <div className="mx-auto max-w-2xl">
-                  {feed.slice(0, 6).map((video, index) => (
-                    <article key={video.id} className="flex gap-3 border-b border-white/10 py-5">
-                      <Avatar image={video.image} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-bold">{video.name}</p>
-                            <p className="text-xs text-gray-500">@{video.creator} · {index + 1}h ago</p>
-                          </div>
-                          <button onClick={() => attemptAction("Follow request")} className="rounded-md border border-pink-500 px-4 py-1 text-sm font-semibold text-pink-500 hover:bg-pink-500/10">Follow</button>
+
+                <div className="mx-auto flex max-w-[850px] justify-center gap-5 px-2 py-4 sm:px-4 md:py-7">
+                  <div className="relative min-w-0 flex-1">
+                    <div className="relative mx-auto max-w-[460px] overflow-hidden rounded-none border border-white/5 bg-[#111] sm:rounded-xl">
+                      <VideoPlaceholder large />
+                      <div className="absolute bottom-5 left-4 right-16 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <AvatarSkeleton />
+                          <Skeleton className="h-3 w-28 bg-white/20" />
+                          <Skeleton className="h-7 w-16 rounded-md bg-white/10" />
                         </div>
-                        <p className="mt-3 text-sm">{video.caption}</p>
-                        <p className="mt-1 text-xs text-sky-300">{video.tags}</p>
-                        <div
-                          className="relative mt-3 aspect-[4/5] max-h-[520px] overflow-hidden rounded-xl bg-[#171717] bg-cover bg-center"
-                          style={{ backgroundImage: `url("${imageUrl(video.image)}")` }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
-                          <Play className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 fill-white/70 text-white/70" />
-                          <span className="absolute bottom-3 left-3 rounded bg-black/40 px-2 py-1 text-xs">Video preview</span>
-                        </div>
-                        <div className="mt-3 flex items-center gap-6 text-sm text-gray-300">
-                          <button onClick={() => attemptAction("Like")} className="flex items-center gap-2 hover:text-pink-400"><Heart className="h-5 w-5" />{video.likes}</button>
-                          <button onClick={() => openComments(video)} className="flex items-center gap-2 hover:text-white"><MessageSquare className="h-5 w-5" />{video.comments}</button>
-                          <button onClick={() => { setSelectedVideo(video); setPanel("share"); }} className="flex items-center gap-2 hover:text-white"><Share2 className="h-5 w-5" />Share</button>
-                          <button onClick={() => attemptAction("Save")} className="ml-auto hover:text-white"><Bookmark className="h-5 w-5" /></button>
-                        </div>
+                        <Skeleton className="h-3 w-4/5 bg-white/20" />
+                        <Skeleton className="h-3 w-2/3 bg-white/20" />
+                        <Skeleton className="h-3 w-1/2 bg-white/20" />
                       </div>
-                    </article>
+                      <div className="absolute bottom-8 right-3">
+                        <FeedActions onAction={runAction} />
+                      </div>
+                    </div>
+                    <div className="mx-auto mt-4 flex max-w-[460px] items-center gap-3 px-3">
+                      <AvatarSkeleton />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-3 w-4/5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop discovery rail */}
+                  <aside className="hidden w-[245px] shrink-0 space-y-6 pt-4 lg:block">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <AvatarSkeleton />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-3 w-28" />
+                          <Skeleton className="h-2 w-20" />
+                        </div>
+                        <Skeleton className="h-7 w-14 rounded-md" />
+                      </div>
+                    ))}
+                    <div className="border-t border-white/10 pt-5">
+                      <Skeleton className="mb-4 h-4 w-24" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <Skeleton key={i} className="aspect-square rounded-lg" />
+                        ))}
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+
+                {/* Additional feed loading cards */}
+                <div className="mx-auto max-w-[460px] space-y-4 px-2 pb-8">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 border-t border-white/10 py-4">
+                      <AvatarSkeleton />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-3 w-3/4" />
+                        <Skeleton className="h-24 w-full rounded-lg" />
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
 
+            {/* Search */}
             {section === "search" && (
-              <section className="mx-auto max-w-2xl py-8">
+              <section className="mx-auto max-w-2xl px-4 py-7">
                 <h1 className="mb-6 text-2xl font-bold">Search</h1>
                 <form onSubmit={search} className="flex gap-2">
-                  <div className="flex flex-1 items-center rounded-lg bg-[#252525] px-4">
+                  <div className="flex min-w-0 flex-1 items-center rounded-full bg-[#252525] px-4">
                     <Search className="h-5 w-5 shrink-0 text-gray-400" />
                     <input
                       value={query}
@@ -334,9 +396,11 @@ export default function DemoFeedClient({
                     />
                     {query && <button type="button" onClick={() => setQuery("")}><X className="h-4 w-4 text-gray-400" /></button>}
                   </div>
-                  <button type="submit" className="rounded-lg bg-pink-600 px-5 text-sm font-semibold hover:bg-pink-500">Search</button>
+                  <button type="submit" className="rounded-full bg-pink-600 px-5 text-sm font-semibold">Search</button>
                 </form>
-                <h2 className="mb-4 mt-8 text-sm font-bold text-gray-300">{searched ? `Results for "${query}"` : "You may like"}</h2>
+                <h2 className="mb-4 mt-8 text-sm font-bold text-gray-300">
+                  {searched ? "Search results" : "You may like"}
+                </h2>
                 {searched ? (
                   <div className="rounded-xl border border-white/10 p-8 text-center">
                     <WifiOff className="mx-auto mb-3 h-8 w-8 text-gray-500" />
@@ -345,10 +409,12 @@ export default function DemoFeedClient({
                     <button onClick={retry} className="mt-5 rounded-lg bg-[#292929] px-5 py-2 text-sm">Try again</button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {["Popular videos", "Trending creators", "Music and sounds", "Comedy clips", "Daily lifestyle"].map((item, i) => (
-                      <button key={item} onClick={() => { setQuery(item); setSearched(false); attemptAction("Search"); }} className="flex w-full items-center gap-3 text-left text-sm hover:text-pink-400">
-                        <Search className="h-4 w-4 text-gray-500" />{item}
+                  <div className="space-y-5">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <button key={i} onClick={() => runAction("Search")} className="flex w-full items-center gap-3 text-left">
+                        <Search className="h-4 w-4 text-gray-500" />
+                        <Skeleton className="h-3 w-40" />
+                        <ChevronDown className="ml-auto h-4 w-4 rotate-[-90deg] text-gray-600" />
                       </button>
                     ))}
                   </div>
@@ -356,8 +422,9 @@ export default function DemoFeedClient({
               </section>
             )}
 
+            {/* Explore and categories */}
             {(section === "explore" || isCategory) && (
-              <section className="py-7">
+              <section className="px-3 py-7 sm:px-5">
                 <h1 className="mb-5 text-2xl font-bold">{title}</h1>
                 <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
                   {categories.map(category => {
@@ -369,112 +436,117 @@ export default function DemoFeedClient({
                     );
                   })}
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {feed.map((video, i) => (
-                    <button key={video.id} onClick={() => attemptAction("Video")} className="relative aspect-[3/4] overflow-hidden rounded-lg bg-[#222] text-left">
-                      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${imageUrl(video.image)}")` }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                      <div className="absolute bottom-3 left-3 right-2 text-xs font-semibold">{video.caption}</div>
-                      <div className="absolute bottom-1 right-2 text-[10px] text-white/80">▶ {video.likes}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <button key={i} onClick={() => runAction("Video")} className="relative aspect-[3/4] overflow-hidden rounded-lg bg-[#171717]">
+                      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#252525] via-[#111] to-[#303030]" />
+                      <div className="absolute bottom-3 left-3 right-3 space-y-2">
+                        <Skeleton className="h-3 w-4/5 bg-white/10" />
+                        <Skeleton className="h-2 w-1/2 bg-white/10" />
+                      </div>
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
+            {/* Friends */}
             {section === "friends" && (
-              <section className="py-7">
+              <section className="mx-auto max-w-2xl px-4 py-7">
                 <h1 className="mb-2 text-2xl font-bold">Friends</h1>
-                <p className="mb-7 text-sm text-gray-500">Find people and see what your friends are sharing.</p>
-                <div className="space-y-5">
-                  {shuffle(people).map(person => (
-                    <div key={person.username} className="flex items-center gap-3">
-                      <Avatar image={person.image} size="h-12 w-12" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold">{person.name}</p>
-                        <p className="text-xs text-gray-500">{person.username}</p>
+                <Skeleton className="mb-7 h-3 w-64" />
+                <div className="space-y-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <AvatarSkeleton size="h-12 w-12" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-3 w-20" />
                       </div>
-                      <button onClick={() => attemptAction("Follow request")} className="rounded-md bg-pink-600 px-4 py-2 text-xs font-semibold">Follow</button>
+                      <button onClick={() => runAction("Follow")} className="rounded-md bg-pink-600 px-4 py-2 text-xs font-semibold">Follow</button>
                     </div>
                   ))}
                 </div>
               </section>
             )}
 
+            {/* Inbox */}
             {section === "inbox" && (
-              <section className="py-7">
+              <section className="mx-auto max-w-2xl px-4 py-7">
                 <h1 className="mb-6 text-2xl font-bold">Inbox</h1>
-                <div className="mb-6 flex gap-3 border-b border-white/10 pb-4">
+                <div className="mb-6 flex gap-6 border-b border-white/10 pb-4">
                   <button className="border-b-2 border-white pb-2 text-sm font-semibold">Messages</button>
-                  <button onClick={() => attemptAction("Activity")} className="pb-2 text-sm text-gray-500">Activities</button>
+                  <button onClick={() => runAction("Activity")} className="text-sm text-gray-500">Activities</button>
                 </div>
-                <div className="space-y-5">
-                  {shuffle(people).map((person, i) => (
-                    <button key={person.username} onClick={() => attemptAction("Conversation")} className="flex w-full items-center gap-3 text-left">
-                      <Avatar image={person.image} size="h-12 w-12" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold">{person.name}</p>
-                        <p className="mt-1 truncate text-xs text-gray-500">{["Hey! How are you?", "That video was amazing!", "Are you free today?", "Just shared a video with you"][i % 4]}</p>
+                <div className="space-y-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <button key={i} onClick={() => runAction("Conversation")} className="flex w-full items-center gap-3 text-left">
+                      <AvatarSkeleton size="h-12 w-12" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-3 w-4/5" />
                       </div>
-                      <span className="text-xs text-gray-600">{i + 1}h</span>
+                      <Skeleton className="h-2 w-8" />
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
+            {/* Profile */}
             {section === "profile" && (
-              <section className="py-7">
+              <section className="mx-auto max-w-2xl px-4 py-7">
                 <div className="flex flex-col items-center text-center">
-                  <Avatar image={videos[0].image} size="h-24 w-24" />
-                  <h1 className="mt-4 text-xl font-bold">Your profile</h1>
-                  <p className="mt-1 text-sm text-gray-500">@your_username</p>
-                  <p className="mt-3 text-sm text-gray-300">Share your moments with the world.</p>
-                  <div className="my-6 flex gap-10 text-center">
-                    <div><p className="font-bold">128</p><p className="text-xs text-gray-500">Following</p></div>
-                    <div><p className="font-bold">2.4K</p><p className="text-xs text-gray-500">Followers</p></div>
-                    <div><p className="font-bold">18.6K</p><p className="text-xs text-gray-500">Likes</p></div>
+                  <AvatarSkeleton size="h-24 w-24" />
+                  <Skeleton className="mt-5 h-4 w-32" />
+                  <Skeleton className="mt-3 h-3 w-24" />
+                  <Skeleton className="mt-5 h-3 w-56" />
+                  <div className="my-7 flex gap-8 sm:gap-12">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="mx-auto h-4 w-10" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    ))}
                   </div>
-                  <button onClick={() => attemptAction("Profile update")} className="rounded-md bg-[#292929] px-8 py-2 text-sm font-semibold">Edit profile</button>
+                  <button onClick={() => runAction("Profile update")} className="rounded-md bg-[#292929] px-8 py-2 text-sm font-semibold">Edit profile</button>
                 </div>
-                <div className="mt-8 grid grid-cols-3 gap-1">
-                  {feed.map(video => (
-                    <button key={video.id} onClick={() => attemptAction("Video")} className="relative aspect-[3/4] overflow-hidden bg-[#222]">
-                      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${imageUrl(video.image)}")` }} />
-                      <Play className="absolute bottom-2 left-2 h-4 w-4 fill-white" />
+                <div className="mt-8 flex justify-center border-b border-white/10 py-3">
+                  <Grid3X3 className="h-5 w-5" />
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-1">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <button key={i} onClick={() => runAction("Video")} className="relative aspect-[3/4] bg-[#202020]">
+                      <Skeleton className="absolute inset-0 rounded-none" />
+                      <Play className="absolute bottom-2 left-2 h-4 w-4 text-gray-500" />
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
+            {/* Create */}
             {section === "create" && (
-              <section className="mx-auto max-w-xl py-8">
+              <section className="mx-auto max-w-xl px-4 py-8">
                 <h1 className="mb-2 text-2xl font-bold">Create post</h1>
-                <p className="mb-7 text-sm text-gray-500">Share a video or photo with your community.</p>
+                <p className="mb-7 text-sm text-gray-500">Upload a video or photo.</p>
                 <div className="rounded-xl border border-dashed border-white/20 bg-[#151515] p-10 text-center">
-                  <ImagePlus className="mx-auto h-12 w-12 text-gray-500" />
+                  <Film className="mx-auto h-12 w-12 text-gray-500" />
                   <p className="mt-4 font-semibold">Select video or photo</p>
                   <p className="mt-2 text-xs text-gray-500">Choose media from your device</p>
-                  <button onClick={() => attemptAction("Media upload")} className="mt-5 rounded-lg bg-pink-600 px-6 py-2 text-sm font-semibold">Select file</button>
+                  <button onClick={() => runAction("Media upload")} className="mt-5 rounded-lg bg-pink-600 px-6 py-2 text-sm font-semibold">Select file</button>
                 </div>
                 <textarea value={caption} onChange={e => setCaption(e.target.value)} placeholder="Write a caption..." className="mt-5 min-h-28 w-full rounded-lg bg-[#252525] p-4 text-sm outline-none placeholder:text-gray-500" />
-                <button onClick={() => attemptAction("Post")} className="mt-4 w-full rounded-lg bg-pink-600 py-3 text-sm font-bold">Post</button>
+                <button onClick={() => runAction("Post")} className="mt-4 w-full rounded-lg bg-pink-600 py-3 text-sm font-bold">Post</button>
               </section>
             )}
 
-            {section !== "home" && section !== "search" && section !== "explore" && section !== "friends" && section !== "inbox" && section !== "profile" && section !== "create" && !isCategory && (
-              <div className="py-10 text-center">
-                <h1 className="text-2xl font-bold">{title}</h1>
-                <p className="mt-3 text-sm text-gray-500">This page is not available right now.</p>
-              </div>
-            )}
           </div>
         </main>
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around border-t border-white/10 bg-black px-1 py-3 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-around border-t border-white/10 bg-black/95 px-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
         {[
           { id: "home", icon: Home },
           { id: "explore", icon: Compass },
@@ -482,39 +554,43 @@ export default function DemoFeedClient({
           { id: "inbox", icon: MessageCircle },
           { id: "profile", icon: UserCircle },
         ].map(({ id, icon: Icon }) => (
-          <Link key={id} href={`${base}/${id}`} className={`p-2 ${section === id ? "text-pink-400" : "text-gray-300"}`}>
+          <Link key={id} href={`${base}/${id}`} className={`flex min-w-0 flex-col items-center gap-1 p-2 ${section === id ? "text-pink-400" : "text-gray-300"}`}>
             <Icon className="h-6 w-6" />
+            <span className="text-[9px]">{id === "home" ? "Home" : id === "explore" ? "Discover" : id === "create" ? "Create" : id === "inbox" ? "Inbox" : "Profile"}</span>
           </Link>
         ))}
       </nav>
 
-      {/* Comment and share panels */}
+      {/* Comments and share panels */}
       {panel && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setPanel(null)}>
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setPanel(null)}>
           <div className="w-full max-w-lg rounded-t-2xl border border-white/10 bg-[#181818] p-5 sm:rounded-2xl" onClick={e => e.stopPropagation()}>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="font-bold">{panel === "comments" ? `Comments · ${selectedVideo?.comments || ""}` : "Share"}</h2>
+              <h2 className="font-bold">{panel === "comments" ? "Comments" : "Share"}</h2>
               <button onClick={() => setPanel(null)}><X className="h-5 w-5" /></button>
             </div>
             {panel === "comments" ? (
               <>
-                <div className="max-h-64 space-y-4 overflow-y-auto">
-                  {["This is amazing!", "Love this video ❤️", "Where was this taken?", "Absolutely beautiful!"].map((item, i) => (
-                    <div key={item} className="flex gap-3">
-                      <Avatar image={people[i].image} size="h-8 w-8" />
-                      <div><p className="text-xs font-semibold">{people[i].username}</p><p className="mt-1 text-sm text-gray-300">{item}</p></div>
+                <div className="max-h-64 space-y-5 overflow-y-auto">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex gap-3">
+                      <AvatarSkeleton size="h-9 w-9" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-4/5" />
+                      </div>
                     </div>
                   ))}
                 </div>
-                <form onSubmit={e => { e.preventDefault(); if (comment.trim()) { attemptAction("Comment"); setComment(""); } }} className="mt-5 flex gap-2">
-                  <input value={comment} onChange={e => setComment(e.target.value)} placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-[#292929] px-4 py-3 text-sm outline-none" />
+                <form onSubmit={e => { e.preventDefault(); runAction("Comment"); }} className="mt-5 flex gap-2">
+                  <input placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-[#292929] px-4 py-3 text-sm outline-none" />
                   <button type="submit" className="rounded-full bg-pink-600 p-3"><Send className="h-4 w-4" /></button>
                 </form>
               </>
             ) : (
               <div className="grid grid-cols-4 gap-4 text-center text-xs">
-                {["Copy link", "Messages", "More", "Save"].map((item, i) => (
-                  <button key={item} onClick={() => { setPanel(null); attemptAction(item); }} className="flex flex-col items-center gap-2">
+                {["Copy link", "Messages", "More", "Save"].map(item => (
+                  <button key={item} onClick={() => runAction(item)} className="flex flex-col items-center gap-2">
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#303030]"><Share2 className="h-5 w-5" /></span>
                     {item}
                   </button>
@@ -525,8 +601,16 @@ export default function DemoFeedClient({
         </div>
       )}
 
-      <NetworkNotice notice={notice} loadingAction={loadingAction} />
+      {pageLoading && (
+        <div className="pointer-events-none fixed inset-0 z-[70] bg-black/20">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 p-4">
+            <RefreshCw className="h-6 w-6 animate-spin text-white/50" />
+          </div>
+        </div>
+      )}
+
+      <LoadingOverlay action={loadingAction} />
+      <NetworkNotice message={notice} />
     </div>
   );
 }
-
