@@ -3,77 +3,17 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-function NeonMusicMark() {
+function TikTokLogo() {
   return (
-    <div className="relative flex h-28 w-28 items-center justify-center">
-      {/* Cyan neon shadow */}
-      <svg
-        viewBox="0 0 100 100"
-        className="absolute h-24 w-24 translate-x-[-7px] translate-y-[3px] text-[#25F4EE] blur-[2px]"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle cx="29" cy="70" r="12" fill="currentColor" />
-        <path
-          d="M41 69V22L79 13V58"
-          stroke="currentColor"
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M41 37C54 27 66 30 79 39"
-          stroke="currentColor"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-      </svg>
+    <div className="relative flex h-32 w-32 items-center justify-center">
+      <div className="absolute inset-2 rounded-full bg-[#25F4EE]/10 blur-2xl" />
+      <div className="absolute inset-2 rounded-full bg-[#FE2C55]/10 blur-2xl" />
 
-      {/* Pink neon shadow */}
-      <svg
-        viewBox="0 0 100 100"
-        className="absolute h-24 w-24 translate-x-[7px] translate-y-[-3px] text-[#FE2C55] blur-[2px]"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle cx="29" cy="70" r="12" fill="currentColor" />
-        <path
-          d="M41 69V22L79 13V58"
-          stroke="currentColor"
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M41 37C54 27 66 30 79 39"
-          stroke="currentColor"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-      </svg>
-
-      {/* Main original white music symbol */}
-      <svg
-        viewBox="0 0 100 100"
-        className="relative h-24 w-24 animate-pulse text-white drop-shadow-[0_0_13px_rgba(255,255,255,0.65)]"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle cx="29" cy="70" r="12" fill="currentColor" />
-        <path
-          d="M41 69V22L79 13V58"
-          stroke="currentColor"
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M41 37C54 27 66 30 79 39"
-          stroke="currentColor"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-      </svg>
+      <img
+        src="/tiktok-logo.png"
+        alt="TikTok"
+        className="relative h-28 w-28 object-contain animate-pulse drop-shadow-[0_0_12px_rgba(37,244,238,0.65)]"
+      />
     </div>
   );
 }
@@ -113,7 +53,7 @@ export function GlobalLoadingScreen() {
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#050505]">
       <div className="flex w-[min(280px,75vw)] flex-col items-center">
-        <NeonMusicMark />
+        <TikTokLogo />
 
         <div className="mt-7 h-[4px] w-full overflow-hidden rounded-full bg-white/15">
           <div
