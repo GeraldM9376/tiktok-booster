@@ -4,7 +4,7 @@ import DemoFeedClient from "./demo-feed-client";
 export default function DemoFeedPage() {
   return (
     <DashboardShell type="earner" authPath="/earn/auth">
-      <DemoFeedClient section="home" />
+      <DemoFeedClient initialSection="home" />
     </DashboardShell>
   );
 }
