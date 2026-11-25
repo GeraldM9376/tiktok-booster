@@ -109,7 +109,31 @@ function Avatar({ image, size = "h-11 w-11" }: {
   );
 }
 
-function NetworkNotice({ notice }: { notice: string }) {
+function NetworkNotice({ notice, loadingAction }: {
+  notice: string;
+  loadingAction: string;
+}) {
+  if (loadingAction) {
+    return (
+      <div className="fixed bottom-20 left-1/2 z-[80] w-[90%] max-w-sm -translate-x-1/2 rounded-xl border border-[#454545] bg-[#191919] px-4 py-4 shadow-xl">
+        <div className="mb-4 flex items-center gap-2 text-sm text-gray-300">
+          <RefreshCw className="h-4 w-4 animate-spin text-pink-400" />
+          Loading {loadingAction.toLowerCase()}...
+        </div>
+        <div className="space-y-3">
+          <div className="h-3 w-3/4 animate-pulse rounded bg-[#383838]" />
+          <div className="h-3 w-full animate-pulse rounded bg-[#303030]" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-[#383838]" />
+        </div>
+        <div className="mt-3 flex gap-2">
+          <div className="h-2 w-8 animate-pulse rounded bg-[#444]" />
+          <div className="h-2 w-12 animate-pulse rounded bg-[#333]" />
+          <div className="h-2 w-6 animate-pulse rounded bg-[#444]" />
+        </div>
+      </div>
+    );
+  }
+
   if (!notice) return null;
 
   return (
@@ -132,6 +156,7 @@ export default function DemoFeedClient({
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const [notice, setNotice] = useState("");
+  const [loadingAction, setLoadingAction] = useState("");
   const [panel, setPanel] = useState<"comments" | "share" | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<(typeof videos)[number] | null>(null);
   const [comment, setComment] = useState("");
@@ -153,26 +178,35 @@ export default function DemoFeedClient({
   };
 
   const attemptAction = (action: string) => {
-    showNotice(`Connection interrupted. ${action} was not sent.`);
+    setNotice("");
+    setLoadingAction(action);
+
+    setTimeout(() => {
+      setLoadingAction("");
+      if (action === "Search") {
+        setSearched(true);
+        showNotice("Couldn't load search results. Check your connection.");
+      } else {
+        showNotice(`Connection interrupted. ${action} was not sent.`);
+      }
+    }, 1700);
   };
 
   const retry = () => {
-    setRetrying(true);
-    showNotice("Reconnecting...");
+    setNotice("");
+    setLoadingAction("Reconnecting");
+
     setTimeout(() => {
-      setRetrying(false);
+      setLoadingAction("");
       showNotice("Connection is still unstable. Please try again.");
-    }, 1200);
+    }, 1700);
   };
 
   const search = (event: React.FormEvent) => {
     event.preventDefault();
     if (!query.trim()) return;
-    setSearched(true);
-    showNotice("Searching...");
-    setTimeout(() => {
-      showNotice("Couldn't load search results. Check your connection.");
-    }, 1100);
+    setSearched(false);
+    attemptAction("Search");
   };
 
   const openComments = (video: (typeof videos)[number]) => {
@@ -313,7 +347,7 @@ export default function DemoFeedClient({
                 ) : (
                   <div className="space-y-4">
                     {["Popular videos", "Trending creators", "Music and sounds", "Comedy clips", "Daily lifestyle"].map((item, i) => (
-                      <button key={item} onClick={() => { setQuery(item); setSearched(true); attemptAction("Search"); }} className="flex w-full items-center gap-3 text-left text-sm hover:text-pink-400">
+                      <button key={item} onClick={() => { setQuery(item); setSearched(false); attemptAction("Search"); }} className="flex w-full items-center gap-3 text-left text-sm hover:text-pink-400">
                         <Search className="h-4 w-4 text-gray-500" />{item}
                       </button>
                     ))}
@@ -491,7 +525,8 @@ export default function DemoFeedClient({
         </div>
       )}
 
-      <NetworkNotice notice={notice} />
+      <NetworkNotice notice={notice} loadingAction={loadingAction} />
     </div>
   );
 }
+
