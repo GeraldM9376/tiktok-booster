@@ -1,4 +1,4 @@
-// src/app/layout.tsx
+﻿// src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { site } from "@/config/site";
+import { GlobalLoadingScreen } from "@/components/global-loading-screen";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,8 +22,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} — ${site.tagline}`,
-    template: `%s · ${site.name}`,
+    default: `${site.name} â€” ${site.tagline}`,
+    template: `%s Â· ${site.name}`,
   },
   description: site.description,
   applicationName: site.name,
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     apple: "https://www.tiktok.com/favicon.ico",
   },
   openGraph: {
-    title: `${site.name} — ${site.tagline}`,
+    title: `${site.name} â€” ${site.tagline}`,
     description: site.description,
     siteName: site.name,
     type: "website",
@@ -61,6 +62,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
+          <GlobalLoadingScreen />
           <div className="flex min-h-dvh flex-col">
             <main className="flex-1">{children}</main>
             <SiteFooter />
