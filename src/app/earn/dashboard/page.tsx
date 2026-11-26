@@ -1,4 +1,4 @@
-// src/app/earn/dashboard/page.tsx
+﻿// src/app/earn/dashboard/page.tsx
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
@@ -15,12 +15,17 @@ async function DashboardContent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/earn/auth");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
   const data = await getEarnerDashboardData(user.id);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome back 👋</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.display_name?.trim() || user.email?.split("@")[0] || "there"}!</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Here is a summary of your account activity.
         </p>

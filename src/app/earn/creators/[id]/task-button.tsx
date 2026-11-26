@@ -146,7 +146,7 @@ export function TaskButton({
     <div className="w-full space-y-3">
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
         <p className="text-sm font-semibold text-primary">
-          View live.
+          Your Live Activity Is Updated!
         </p>
         <Button
           type="button"
@@ -156,7 +156,7 @@ export function TaskButton({
           disabled={!liveUrl}
           onClick={() => setShowLiveLink((value) => !value)}
         >
-          Click Earn More
+          View
           <ExternalLink className="ml-2 h-4 w-4" />
         </Button>
 
@@ -188,7 +188,7 @@ export function TaskButton({
             </Button>
             <Button asChild variant="default" className="shadow-glow">
               <a href={`/earn/creators/${targetId}`}>
-                Earn More
+                Watch Live
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
@@ -239,3 +239,4 @@ export function TaskButton({
     </motion.button>
   );
 }
+
