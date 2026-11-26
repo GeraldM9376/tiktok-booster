@@ -1,9 +1,9 @@
-// src/components/layout/topbar.tsx
+﻿// src/components/layout/topbar.tsx
 "use client";
 
 import { useTheme } from "next-themes";
 import { Bell, Moon, Sun, LogOut, User, Wallet, Menu } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ interface TopbarProps {
 export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMenuClick }: TopbarProps) {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
 
   const initials = (displayName || userEmail).slice(0, 2).toUpperCase();
 
@@ -79,7 +80,8 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
+          {pathname.startsWith("/admin") && (
+  <DropdownMenuItem onClick={() => router.push("/settings")}>
             <User className="mr-2 h-4 w-4" /> Account Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
