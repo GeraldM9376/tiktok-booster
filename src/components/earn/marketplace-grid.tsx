@@ -7,12 +7,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { resolveAvatar } from "@/lib/utils";
 
-function LoadingSkeleton() {
+function LoadingSkeleton({ message }: { message: string }) {
   return (
     <div
-      className="h-5 w-16 animate-pulse rounded bg-muted"
-      aria-label="Statistics unavailable"
-    />
+      className="mt-1 flex min-h-[42px] w-full items-center justify-center rounded-md bg-muted/70 px-2 py-1 animate-pulse"
+      aria-label={message}
+    >
+      <span className="text-center text-[9px] leading-tight text-muted-foreground">
+        {message}
+      </span>
+    </div>
   );
 }
 
@@ -27,11 +31,7 @@ export function MarketplaceGrid({
     return (
       <div className="rounded-xl border border-dashed border-border py-12 text-center">
         <Search className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-
-        <h3 className="font-semibold">
-          No creators found
-        </h3>
-
+        <h3 className="font-semibold">No creators found</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Try another creator name or TikTok username.
         </p>
@@ -66,7 +66,6 @@ export function MarketplaceGrid({
                     src={resolveAvatar(creator.avatar_url, safeId)}
                     alt={name}
                   />
-
                   <AvatarFallback>
                     {name.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -75,14 +74,10 @@ export function MarketplaceGrid({
                 <div className="min-w-0 overflow-hidden">
                   <p className="flex items-center gap-1 truncate font-semibold">
                     {name}
-
                     {creator.verified && (
-                      <span className="text-xs text-primary">
-                        ✓
-                      </span>
+                      <span className="text-xs text-primary">✓</span>
                     )}
                   </p>
-
                   <p className="truncate text-xs text-muted-foreground">
                     @{username}
                   </p>
@@ -91,9 +86,7 @@ export function MarketplaceGrid({
 
               <div className="mt-auto grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded bg-secondary/50 p-2">
-                  <p className="text-muted-foreground">
-                    Followers
-                  </p>
+                  <p className="text-muted-foreground">Followers</p>
 
                   {isDemo ? (
                     <p className="font-semibold">
@@ -102,25 +95,19 @@ export function MarketplaceGrid({
                       ).toLocaleString()}
                     </p>
                   ) : (
-                    <div className="mt-1">
-                      <LoadingSkeleton />
-                    </div>
+                    <LoadingSkeleton message="Retrieving actual followers from live TikTok…" />
                   )}
                 </div>
 
                 <div className="rounded bg-secondary/50 p-2">
-                  <p className="text-muted-foreground">
-                    Engagement
-                  </p>
+                  <p className="text-muted-foreground">Engagement</p>
 
                   {isDemo ? (
                     <p className="font-semibold">
                       {Number(creator.engagement_rate || 0)}%
                     </p>
                   ) : (
-                    <div className="mt-1">
-                      <LoadingSkeleton />
-                    </div>
+                    <LoadingSkeleton message="Getting live engagement figures…" />
                   )}
                 </div>
               </div>

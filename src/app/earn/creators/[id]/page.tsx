@@ -8,12 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Heart, ExternalLink } from "lucide-react";
 import { VideoList } from "./video-list";
 
-function LoadingSkeleton() {
+function LoadingSkeleton({ message }: { message: string }) {
   return (
     <div
-      className="h-7 w-20 animate-pulse rounded-md bg-muted"
-      aria-label="Statistics unavailable"
-    />
+      className="flex min-h-[46px] w-full min-w-[150px] items-center justify-center rounded-md bg-muted/70 px-2 py-1 animate-pulse"
+      aria-label={message}
+    >
+      <span className="text-center text-[10px] leading-tight text-muted-foreground">
+        {message}
+      </span>
+    </div>
   );
 }
 
@@ -148,15 +152,15 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           )}
 
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
-            <div>
+            <div className="min-w-[150px]">
               {isDemo ? (
                 <p className="text-2xl font-bold">
                   {followerCount.toLocaleString()}
                 </p>
               ) : (
-                <LoadingSkeleton />
+                <LoadingSkeleton message="Retrieving actual followers from live TikTok…" />
               )}
-              <p className="text-xs text-muted-foreground uppercase">
+              <p className="mt-1 text-xs text-muted-foreground uppercase">
                 Followers
               </p>
             </div>
@@ -170,15 +174,15 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
               </p>
             </div>
 
-            <div>
+            <div className="min-w-[150px]">
               {isDemo ? (
                 <p className="text-2xl font-bold">
                   {engagementRate}%
                 </p>
               ) : (
-                <LoadingSkeleton />
+                <LoadingSkeleton message="Getting live engagement figures…" />
               )}
-              <p className="text-xs text-muted-foreground uppercase">
+              <p className="mt-1 text-xs text-muted-foreground uppercase">
                 Engagement
               </p>
             </div>

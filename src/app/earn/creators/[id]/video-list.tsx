@@ -65,9 +65,13 @@ function isVideoLink(value: string | null): boolean {
 function LoadingSkeleton() {
   return (
     <div
-      className="ml-auto h-5 w-16 animate-pulse rounded bg-muted"
-      aria-label="Views unavailable"
-    />
+      className="ml-auto flex min-h-[42px] w-36 items-center justify-center rounded-md bg-muted/70 px-2 py-1 animate-pulse"
+      aria-label="Retrieving live TikTok views"
+    >
+      <span className="text-center text-[9px] leading-tight text-muted-foreground">
+        Retrieving live TikTok views…
+      </span>
+    </div>
   );
 }
 
@@ -237,7 +241,7 @@ export function VideoList({
                         isLiked ? "text-red-500" : "text-foreground"
                       }`}
                     >
-                      {(Number(video.like_count) || 0).toLocaleString()}
+                      +{(Number(video.like_count) || 0).toLocaleString()}
                     </p>
                     <p className="text-[10px] uppercase">Likes</p>
                   </div>
