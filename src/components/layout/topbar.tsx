@@ -79,11 +79,14 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
             <p className="text-sm font-medium">{displayName || "Account"}</p>
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
           {pathname.startsWith("/admin") && (
-  <DropdownMenuItem onClick={() => router.push("/settings")}>
-            <User className="mr-2 h-4 w-4" /> Account Settings
-          </DropdownMenuItem>
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
+                <User className="mr-2 h-4 w-4" /> Account Settings
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <form action={signOut} className="w-full">
@@ -97,3 +100,4 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
     </header>
   );
 }
+
