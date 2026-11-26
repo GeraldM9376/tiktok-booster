@@ -1257,6 +1257,7 @@ export type Database = {
       wallets: {
         Row: {
           available_balance: number
+          topup_balance: number
           lifetime_earned: number
           pending_balance: number
           referral_earned: number
@@ -1265,6 +1266,7 @@ export type Database = {
         }
         Insert: {
           available_balance?: number
+          topup_balance?: number
           lifetime_earned?: number
           pending_balance?: number
           referral_earned?: number
@@ -1273,6 +1275,7 @@ export type Database = {
         }
         Update: {
           available_balance?: number
+          topup_balance?: number
           lifetime_earned?: number
           pending_balance?: number
           referral_earned?: number
@@ -1529,4 +1532,3 @@ export const Constants = {
     },
   },
 } as const
-

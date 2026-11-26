@@ -1,4 +1,4 @@
-
+﻿
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -57,11 +57,32 @@ async function DashboardShellContent({
     .eq("id", user.id)
     .single();
 
-  const { data: wallet } = await supabase
-    .from("wallets")
-    .select("available_balance")
-    .eq("user_id", user.id)
-    .single();
+  let walletBalance: number | undefined;
+
+  if (type === "creator") {
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("topup_balance")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    walletBalance = wallet
+      ? Number(wallet.topup_balance ?? 0)
+      : undefined;
+  } else {
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("available_balance")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    walletBalance = wallet
+      ? Number(wallet.available_balance ?? 0)
+      : undefined;
+  }
+
+  const walletLabel =
+    type === "creator" ? "Top-up credits" : "Available credits";
 
   return (
     <DashboardLayoutClient
@@ -69,7 +90,8 @@ async function DashboardShellContent({
       userEmail={user.email ?? ""}
       displayName={profile?.display_name ?? null}
       avatarUrl={profile?.avatar_url ?? null}
-      walletBalance={wallet?.available_balance}
+      walletBalance={walletBalance}
+      walletLabel={walletLabel}
     >
       {children}
     </DashboardLayoutClient>

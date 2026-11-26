@@ -124,7 +124,7 @@ export function TopupForm({
       }
 
       toast.success(
-        "Top-up request submitted. Awaiting Admin approval."
+        "Top-up request submitted successfully. Your payment is awaiting approval that may take up to 24 hours."
       );
 
       setReference("");

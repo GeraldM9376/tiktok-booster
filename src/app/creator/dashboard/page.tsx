@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -33,13 +34,13 @@ async function CreatorDashboardContent() {
   ] = await Promise.all([
     supabase
       .from("creator_profiles")
-      .select("*, niches(name)")
+      .select("tiktok_username")
       .eq("user_id", user.id)
       .maybeSingle(),
 
     supabase
       .from("wallets")
-      .select("available_balance")
+      .select("topup_balance")
       .eq("user_id", user.id)
       .maybeSingle(),
 
@@ -119,7 +120,7 @@ async function CreatorDashboardContent() {
   }
 
   const totalFollows = Number(creator?.follower_count ?? 0);
-  const availableCredits = Number(wallet?.available_balance ?? 0);
+  const topupCredits = Number(wallet?.topup_balance ?? 0);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -152,9 +153,9 @@ async function CreatorDashboardContent() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Wallet className="h-4 w-4 text-primary" />}
-          label="Available Credits"
-          value={availableCredits.toLocaleString()}
-          sub="Ready to spend"
+          label="Top-up Credits"
+          value={topupCredits.toLocaleString()}
+          sub="Available for campaigns"
         />
 
         <StatCard
@@ -234,15 +235,15 @@ async function CreatorDashboardContent() {
         <div className="glass rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
             <Coins className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Available Credits</h2>
+            <h2 className="text-lg font-semibold">Top-up Credits</h2>
           </div>
 
           <p className="text-3xl font-bold">
-            {availableCredits.toLocaleString()}
+            {topupCredits.toLocaleString()}
           </p>
 
           <p className="text-sm text-muted-foreground mt-1 mb-5">
-            Your current spendable wallet balance.
+            Purchased credits available for creator campaigns. These credits cannot be withdrawn.
           </p>
 
           <Button asChild>

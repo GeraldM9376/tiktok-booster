@@ -1,10 +1,8 @@
-﻿// src/components/layout/topbar.tsx
-"use client";
+﻿"use client";
 
 import { useTheme } from "next-themes";
 import { Bell, Moon, Sun, LogOut, User, Wallet, Menu } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +21,18 @@ interface TopbarProps {
   displayName: string | null;
   avatarUrl: string | null;
   walletBalance?: number;
+  walletLabel: string;
   onMenuClick?: () => void;
 }
 
-export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMenuClick }: TopbarProps) {
+export function Topbar({
+  userEmail,
+  displayName,
+  avatarUrl,
+  walletBalance,
+  walletLabel,
+  onMenuClick,
+}: TopbarProps) {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -35,9 +41,12 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/60 bg-background/80 backdrop-blur px-4 md:px-6">
-      
-      {/* Mobile Menu Button */}
-      <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={onMenuClick}
+      >
         <Menu className="h-5 w-5" />
       </Button>
 
@@ -46,8 +55,12 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
       {typeof walletBalance === "number" && (
         <div className="hidden items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5 text-sm md:flex">
           <Wallet className="h-4 w-4 text-primary" />
-          <span className="font-semibold">{walletBalance.toLocaleString()}</span>
-          <span className="text-xs text-muted-foreground">credits</span>
+          <span className="font-semibold">
+            {walletBalance.toLocaleString()}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {walletLabel}
+          </span>
         </div>
       )}
 
@@ -69,29 +82,42 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-9 w-9 rounded-full">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={avatarUrl || undefined} alt={displayName || userEmail} />
+              <AvatarImage
+                src={avatarUrl || undefined}
+                alt={displayName || userEmail}
+              />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
-            <p className="text-sm font-medium">{displayName || "Account"}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            <p className="text-sm font-medium">
+              {displayName || "Account"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {userEmail}
+            </p>
           </DropdownMenuLabel>
+
           {pathname.startsWith("/admin") && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/settings")}>
-                <User className="mr-2 h-4 w-4" /> Account Settings
+                <User className="mr-2 h-4 w-4" />
+                Account Settings
               </DropdownMenuItem>
             </>
           )}
+
           <DropdownMenuSeparator />
+
           <DropdownMenuItem asChild>
             <form action={signOut} className="w-full">
               <button type="submit" className="flex w-full items-center">
-                <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
               </button>
             </form>
           </DropdownMenuItem>
@@ -100,4 +126,3 @@ export function Topbar({ userEmail, displayName, avatarUrl, walletBalance, onMen
     </header>
   );
 }
-
