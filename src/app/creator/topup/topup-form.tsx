@@ -195,8 +195,7 @@ export function TopupForm({
           </h2>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Your payment is awaiting admin approval. Approval may take
-            up to 24 hours.
+            Your payment is awaiting approval. Approval may take up to 24 hours.
           </p>
 
           <p className="mt-2 text-sm font-medium">

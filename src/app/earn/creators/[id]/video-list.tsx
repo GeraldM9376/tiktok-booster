@@ -62,6 +62,15 @@ function isVideoLink(value: string | null): boolean {
   }
 }
 
+function LoadingSkeleton() {
+  return (
+    <div
+      className="ml-auto h-5 w-16 animate-pulse rounded bg-muted"
+      aria-label="Views unavailable"
+    />
+  );
+}
+
 export function VideoList({
   videos,
   isOnDailyTaskPage = false,
@@ -167,16 +176,28 @@ export function VideoList({
                     )}
 
                     {videoUrl ? (
-                      <a
-                        href={videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={videoUrl}
-                        className="mt-1 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-primary hover:underline"
-                      >
-                        <span className="truncate">{videoUrl}</span>
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
+                      isDemo ? (
+                        <span
+                          role="link"
+                          aria-disabled="true"
+                          title={videoUrl}
+                          className="mt-1 inline-flex max-w-full cursor-default items-center gap-1 truncate font-mono text-xs text-primary"
+                        >
+                          <span className="truncate">{videoUrl}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </span>
+                      ) : (
+                        <a
+                          href={videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={videoUrl}
+                          className="mt-1 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-primary hover:underline"
+                        >
+                          <span className="truncate">{videoUrl}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      )
                     ) : (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Video link unavailable
@@ -185,13 +206,13 @@ export function VideoList({
 
                     {testUrl && (
                       <a
-                        href={testUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={isDemo ? "/earn/demo-feed" : testUrl}
+                        target={isDemo ? undefined : "_blank"}
+                        rel={isDemo ? undefined : "noopener noreferrer"}
                         className="mt-2 inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
                       >
                         <Play className="h-3 w-3" />
-                        Test Video
+                        {isDemo ? "See Live" : "Test Video"}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -200,9 +221,13 @@ export function VideoList({
 
                 <div className="flex items-center justify-end gap-5 whitespace-nowrap text-sm text-muted-foreground">
                   <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {(Number(video.view_count) || 0).toLocaleString()}
-                    </p>
+                    {isDemo ? (
+                      <p className="font-semibold text-foreground">
+                        {(Number(video.view_count) || 0).toLocaleString()}
+                      </p>
+                    ) : (
+                      <LoadingSkeleton />
+                    )}
                     <p className="text-[10px] uppercase">Views</p>
                   </div>
 

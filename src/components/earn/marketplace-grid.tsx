@@ -7,6 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { resolveAvatar } from "@/lib/utils";
 
+function LoadingSkeleton() {
+  return (
+    <div
+      className="h-5 w-16 animate-pulse rounded bg-muted"
+      aria-label="Statistics unavailable"
+    />
+  );
+}
+
 export function MarketplaceGrid({
   creators,
   nicheMap,
@@ -38,6 +47,8 @@ export function MarketplaceGrid({
         const name = String(
           creator.display_name || username || "Creator"
         );
+
+        const isDemo = creator.profile_id === null;
 
         const nicheName =
           nicheMap.get(creator.niche_id) || "Uncategorized";
@@ -84,11 +95,17 @@ export function MarketplaceGrid({
                     Followers
                   </p>
 
-                  <p className="font-semibold">
-                    {Number(
-                      creator.follower_count || 0
-                    ).toLocaleString()}
-                  </p>
+                  {isDemo ? (
+                    <p className="font-semibold">
+                      {Number(
+                        creator.follower_count || 0
+                      ).toLocaleString()}
+                    </p>
+                  ) : (
+                    <div className="mt-1">
+                      <LoadingSkeleton />
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded bg-secondary/50 p-2">
@@ -96,11 +113,15 @@ export function MarketplaceGrid({
                     Engagement
                   </p>
 
-                  <p className="font-semibold">
-                    {Number(
-                      creator.engagement_rate || 0
-                    )}%
-                  </p>
+                  {isDemo ? (
+                    <p className="font-semibold">
+                      {Number(creator.engagement_rate || 0)}%
+                    </p>
+                  ) : (
+                    <div className="mt-1">
+                      <LoadingSkeleton />
+                    </div>
+                  )}
                 </div>
               </div>
 

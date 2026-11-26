@@ -2,7 +2,7 @@
 export const site = {
   name: "TikTok Booster",
   shortName: "Booster",
-  tagline: "Boost your creator journey. Grow faster. Earn more.",
+  tagline: " Create. Connect Globally Easily. Grow Faster. Earn Bigger.",
   description:
     "TikTok Booster helps creators grow their presence and earn rewards through structured engagement and campaign tools.",
   url: "https://tiktok-booster-orpin.vercel.app",

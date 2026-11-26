@@ -20,7 +20,7 @@ export default function Page() {
         </div>
 
         <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-6xl">
-          <span className="text-gradient">Turn your creator journey into something bigger.</span>
+          <span className="text-gradient">Create. Connect Easily Globally. Grow Faster. Earn Bigger.</span>
         </h1>
 
         <p className="mt-4 text-lg text-muted-foreground md:text-xl">{site.tagline}</p>

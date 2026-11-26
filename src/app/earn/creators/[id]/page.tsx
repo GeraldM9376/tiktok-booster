@@ -1,4 +1,4 @@
-
+﻿
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Heart, ExternalLink } from "lucide-react";
 import { VideoList } from "./video-list";
+
+function LoadingSkeleton() {
+  return (
+    <div
+      className="h-7 w-20 animate-pulse rounded-md bg-muted"
+      aria-label="Statistics unavailable"
+    />
+  );
+}
 
 async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -77,12 +86,18 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
 
   const avatarUrl = creator.avatar_url || undefined;
 
+  const isDemo = creator.profile_id === null;
+
   const tiktokProfileUrl =
     creator.tiktok_profile_url ||
     creator.profile_url ||
     (username
       ? `https://www.tiktok.com/@${username.replace(/^@/, "")}`
       : null);
+
+  const profileLinkUrl = isDemo
+    ? "/earn/demo-feed"
+    : tiktokProfileUrl;
 
   const followerCount = Number(creator.follower_count || 0);
   const engagementRate = Number(creator.engagement_rate || 0);
@@ -120,11 +135,11 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
             </p>
           )}
 
-          {tiktokProfileUrl && (
+          {profileLinkUrl && (
             <a
-              href={tiktokProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={profileLinkUrl}
+              target={isDemo ? undefined : "_blank"}
+              rel={isDemo ? undefined : "noopener noreferrer"}
               className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
             >
               View TikTok Profile
@@ -134,9 +149,13 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-6">
             <div>
-              <p className="text-2xl font-bold">
-                {followerCount.toLocaleString()}
-              </p>
+              {isDemo ? (
+                <p className="text-2xl font-bold">
+                  {followerCount.toLocaleString()}
+                </p>
+              ) : (
+                <LoadingSkeleton />
+              )}
               <p className="text-xs text-muted-foreground uppercase">
                 Followers
               </p>
@@ -152,9 +171,13 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             <div>
-              <p className="text-2xl font-bold">
-                {engagementRate}%
-              </p>
+              {isDemo ? (
+                <p className="text-2xl font-bold">
+                  {engagementRate}%
+                </p>
+              ) : (
+                <LoadingSkeleton />
+              )}
               <p className="text-xs text-muted-foreground uppercase">
                 Engagement
               </p>
@@ -192,7 +215,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
       <VideoList
         videos={videos || []}
         isOnDailyTaskPage={true}
-        isDemo={creator.profile_id === null}
+        isDemo={isDemo}
       />
     </div>
   );

@@ -18,7 +18,6 @@ export default async function MarketplacePage({
   const requestedPage = Number(params.page) || 1;
   const currentPage = Math.max(1, requestedPage);
 
-  // Keep search input safe for the Supabase PostgREST filter.
   const searchTerm = (params.q || "")
     .trim()
     .replace(/^@+/, "")
@@ -30,11 +29,10 @@ export default async function MarketplacePage({
   let creatorsQuery = supabase
     .from("creators")
     .select(
-      "id, username, display_name, avatar_url, follower_count, engagement_rate, verified, niche_id",
+      "id, username, display_name, avatar_url, follower_count, engagement_rate, verified, niche_id, profile_id",
       { count: "exact" }
     );
 
-  // Search the complete database before applying pagination.
   if (searchTerm) {
     creatorsQuery = creatorsQuery.or(
       `display_name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`
