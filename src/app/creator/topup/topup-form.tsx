@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -47,15 +47,41 @@ export function TopupForm({
 }) {
   const router = useRouter();
 
+  const topRef = useRef<HTMLDivElement>(null);
+  const checkoutRef = useRef<HTMLElement>(null);
+
   const [selectedPackage, setSelectedPackage] =
     useState<TopupPackage | null>(null);
   const [reference, setReference] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [submissionNotice, setSubmissionNotice] = useState(false);
 
   const paymentAvailable =
     !!paymentSettings.paybill &&
     !!paymentSettings.account &&
     !/maintenance|unavailable|disabled/i.test(paymentSettings.paybill);
+
+  useEffect(() => {
+    if (!selectedPackage) return;
+
+    const timeout = window.setTimeout(() => {
+      checkoutRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    return () => window.clearTimeout(timeout);
+  }, [selectedPackage]);
+
+  useEffect(() => {
+    if (!submissionNotice) return;
+
+    topRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [submissionNotice]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -123,12 +149,12 @@ export function TopupForm({
         return;
       }
 
-      toast.success(
-        "Top-up request submitted successfully. Your payment is awaiting approval that may take up to 24 hours."
-      );
-
       setReference("");
       setSelectedPackage(null);
+      setSubmissionNotice(true);
+
+      toast.success("Top-up request submitted successfully.");
+
       router.refresh();
     } catch (error) {
       console.error("Top-up submission error:", error);
@@ -161,7 +187,25 @@ export function TopupForm({
   }
 
   return (
-    <div className="space-y-10">
+    <div ref={topRef} className="space-y-10 scroll-mt-6">
+      {submissionNotice && (
+        <section className="scroll-mt-6 rounded-xl border border-green-500/30 bg-green-500/10 p-5">
+          <h2 className="text-lg font-bold text-green-700 dark:text-green-400">
+            Top-up Request Submitted Successfully!
+          </h2>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your payment is awaiting admin approval. Approval may take
+            up to 24 hours.
+          </p>
+
+          <p className="mt-2 text-sm font-medium">
+            Your Campaign Credits will be added to your creator wallet
+            once the administrator approves your payment.
+          </p>
+        </section>
+      )}
+
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-bold">Choose a Credit Package</h2>
@@ -184,19 +228,26 @@ export function TopupForm({
                     ? "border-primary shadow-glow scale-[1.02]"
                     : "hover:border-primary/50"
                 }`}
-                onClick={() => setSelectedPackage(pkg)}
+                onClick={() => {
+                  setSubmissionNotice(false);
+                  setSelectedPackage(pkg);
+                }}
               >
                 <h3 className="text-lg font-bold">{pkg.name}</h3>
 
-                <p className="mt-2 text-3xl font-extrabold text-primary">
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Campaign Credits Received
+                </p>
+
+                <p className="mt-1 text-3xl font-extrabold text-primary">
                   {Number(pkg.credits).toLocaleString("en-KE")}
                 </p>
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  credits
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Amount to Pay
                 </p>
 
-                <p className="mt-4 text-lg font-bold">
+                <p className="mt-1 text-xl font-bold">
                   KSh {pkg.price_label}
                 </p>
 
@@ -208,7 +259,9 @@ export function TopupForm({
 
                 <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
                   {pkg.features?.map((feature, index) => (
-                    <li key={`${pkg.id}-${index}`}>• {feature}</li>
+                    <li key={`${pkg.id}-${index}`}>
+                      • {feature}
+                    </li>
                   ))}
                 </ul>
 
@@ -224,11 +277,45 @@ export function TopupForm({
       </section>
 
       {selectedPackage && (
-        <section className="glass space-y-6 rounded-xl p-6">
+        <section
+          ref={checkoutRef}
+          className="glass scroll-mt-6 space-y-6 rounded-xl p-6"
+        >
           <div>
             <h2 className="text-xl font-bold">Checkout</h2>
             <p className="text-sm text-muted-foreground">
-              Pay using the official payment instructions below.
+              Review your selected package and payment instructions.
+            </p>
+          </div>
+
+          <div className="rounded-lg border p-4">
+            <p className="font-semibold">
+              {selectedPackage.name}
+            </p>
+
+            <div className="mt-3 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  Campaign Credits Received
+                </p>
+                <p className="text-lg font-bold text-primary">
+                  {selectedPackage.credits.toLocaleString("en-KE")}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  Amount to Pay
+                </p>
+                <p className="text-lg font-bold">
+                  KSh {selectedPackage.price_label}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              These credits are for creator campaigns only and cannot
+              be withdrawn or transferred to your earnings balance.
             </p>
           </div>
 
@@ -262,16 +349,9 @@ export function TopupForm({
                 </p>
 
                 <p className="mt-2 text-muted-foreground">
-                  Amount:{" "}
+                  Amount to Pay:{" "}
                   <span className="font-semibold text-foreground">
                     KSh {selectedPackage.price_label}
-                  </span>
-                </p>
-
-                <p className="mt-2 text-muted-foreground">
-                  Credits:{" "}
-                  <span className="font-semibold text-foreground">
-                    {selectedPackage.credits.toLocaleString("en-KE")}
                   </span>
                 </p>
               </div>
@@ -303,8 +383,8 @@ export function TopupForm({
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  Credits are added only after Admin verifies and approves
-                  your payment.
+                  Campaign Credits are added only after Admin verifies
+                  and approves your payment.
                 </p>
               </form>
             </>
@@ -353,7 +433,7 @@ export function TopupForm({
                   <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        Amount
+                        Amount to Pay
                       </p>
                       <p className="font-semibold">
                         KSh {pkg?.price_label || "—"}
@@ -362,7 +442,7 @@ export function TopupForm({
 
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        Credits
+                        Campaign Credits
                       </p>
                       <p className="font-semibold">
                         {item.requested_credits.toLocaleString("en-KE")}

@@ -79,8 +79,10 @@ export function PromoteButton({
     try {
       const supabase = createClient();
 
-      const { data: { user }, error: authError } =
-        await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (authError || !user) {
         toast.error("Please log in to create a campaign.");
@@ -98,6 +100,20 @@ export function PromoteButton({
       );
 
       if (error) {
+        if (
+          error.message
+            .toLowerCase()
+            .includes("insufficient top-up credits")
+        ) {
+          toast.error(
+            "Insufficient Top-up Credits. Please top up your wallet before creating this campaign."
+          );
+
+          setOpen(false);
+          router.push("/creator/topup");
+          return;
+        }
+
         toast.error(error.message);
         return;
       }
@@ -133,8 +149,10 @@ export function PromoteButton({
     try {
       const supabase = createClient();
 
-      const { data: { user }, error: authError } =
-        await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (authError || !user) {
         toast.error("Please log in again.");
