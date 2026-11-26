@@ -188,7 +188,7 @@ export function TaskButton({
             </Button>
             <Button asChild variant="default" className="shadow-glow">
               <a href={`/earn/creators/${targetId}`}>
-                Watch Live
+                Earn More
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
