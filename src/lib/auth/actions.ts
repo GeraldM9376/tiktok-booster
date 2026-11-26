@@ -1,4 +1,4 @@
-
+﻿
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -179,7 +179,14 @@ export async function signup(
 export async function signOut() {
   const supabase = await createClient();
 
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
 
+  if (error) {
+    console.error("Sign out failed:", error.message);
+    throw new Error("Unable to sign out. Please try again.");
+  }
+
+  revalidatePath("/", "layout");
   redirect("/");
 }
+
