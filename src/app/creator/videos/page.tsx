@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PromoteButton } from "./promote-button";
+import { DeleteVideoButton } from "./delete-video-button";
 import { Loader2, Play, ExternalLink } from "lucide-react";
 
 function getSafeUrl(value: unknown): string | null {
@@ -14,9 +14,7 @@ function getSafeUrl(value: unknown): string | null {
 
   try {
     const url = new URL(value.trim());
-
     if (!["http:", "https:"].includes(url.protocol)) return null;
-
     return url.toString();
   } catch {
     return null;
@@ -80,6 +78,7 @@ async function VideosContent() {
       )
     `)
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -105,10 +104,8 @@ async function VideosContent() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => {
             const campaigns = video.campaigns ?? [];
-
             const thumbnailUrl = getSafeUrl(video.thumbnail_url);
             const videoUrl = getSafeUrl(video.video_url);
-
             const thumbnailIsVideo = isVideoLink(thumbnailUrl);
 
             const testUrl = thumbnailIsVideo
@@ -128,9 +125,7 @@ async function VideosContent() {
                   ) : thumbnailIsVideo ? (
                     <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
                       <Play className="h-10 w-10 text-primary" />
-                      <p className="font-semibold">
-                        TikTok Video Link
-                      </p>
+                      <p className="font-semibold">TikTok Video Link</p>
                       <p className="text-xs text-muted-foreground">
                         A video URL was provided instead of an image.
                       </p>
@@ -195,6 +190,11 @@ async function VideosContent() {
                   <PromoteButton
                     videoId={video.id}
                     campaigns={campaigns}
+                  />
+
+                  <DeleteVideoButton
+                    videoId={video.id}
+                    videoTitle={video.title}
                   />
                 </CardContent>
               </Card>

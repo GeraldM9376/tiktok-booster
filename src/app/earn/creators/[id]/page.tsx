@@ -1,4 +1,4 @@
-﻿
+
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +29,8 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
   const { data: videos } = await supabase
     .from("videos")
     .select("*")
-    .eq("creator_id", id);
+    .eq("creator_id", id)
+    .is("deleted_at", null);
 
   const { data: todayData } = await supabase.rpc("get_local_date");
 
@@ -105,7 +106,7 @@ async function CreatorContent({ params }: { params: Promise<{ id: string }> }) {
           <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
             {displayName}
             {creator.verified && (
-              <span className="text-primary text-xl">✓</span>
+              <span className="text-primary text-xl">?</span>
             )}
           </h1>
 

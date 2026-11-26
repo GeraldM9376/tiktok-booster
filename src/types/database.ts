@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -365,6 +365,7 @@ export type Database = {
       creator_videos: {
         Row: {
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           likes: number
@@ -379,6 +380,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           likes?: number
@@ -393,6 +395,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           likes?: number
@@ -1150,6 +1153,7 @@ export type Database = {
       videos: {
         Row: {
           created_at: string
+          deleted_at: string | null
           creator_id: string
           description: string | null
           id: string
@@ -1162,6 +1166,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           creator_id: string
           description?: string | null
           id?: string
@@ -1174,6 +1179,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           creator_id?: string
           description?: string | null
           id?: string

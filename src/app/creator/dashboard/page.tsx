@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +46,8 @@ async function CreatorDashboardContent() {
     supabase
       .from("creator_videos")
       .select("id", { count: "exact" })
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .is("deleted_at", null),
 
     supabase
       .from("campaigns")
@@ -96,6 +96,7 @@ async function CreatorDashboardContent() {
     .from("creator_videos")
     .select("earner_video_id")
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .not("earner_video_id", "is", null);
 
   const videoIds = (videoIdsResult.data ?? [])
@@ -108,7 +109,8 @@ async function CreatorDashboardContent() {
     const likesResult = await supabase
       .from("videos")
       .select("like_count")
-      .in("id", videoIds);
+      .in("id", videoIds)
+      .is("deleted_at", null);
 
     totalLikes = (likesResult.data ?? []).reduce(
       (sum, video) => sum + Number(video.like_count ?? 0),
@@ -117,7 +119,6 @@ async function CreatorDashboardContent() {
   }
 
   const totalFollows = Number(creator?.follower_count ?? 0);
-
   const availableCredits = Number(wallet?.available_balance ?? 0);
 
   return (
@@ -200,15 +201,11 @@ async function CreatorDashboardContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">
-                Total Spent
-              </p>
+              <p className="text-sm text-muted-foreground">Total Spent</p>
               <p className="text-2xl font-bold">
                 {totalSpent.toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Credits
-              </p>
+              <p className="text-xs text-muted-foreground">Credits</p>
             </div>
 
             <div>
@@ -218,9 +215,7 @@ async function CreatorDashboardContent() {
               <p className="text-2xl font-bold text-green-500">
                 {remainingBudget.toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Credits
-              </p>
+              <p className="text-xs text-muted-foreground">Credits</p>
             </div>
           </div>
 
@@ -232,18 +227,14 @@ async function CreatorDashboardContent() {
           </div>
 
           <Button className="mt-4" variant="outline" asChild>
-            <Link href="/creator/videos">
-              View Campaigns
-            </Link>
+            <Link href="/creator/videos">View Campaigns</Link>
           </Button>
         </div>
 
         <div className="glass rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
             <Coins className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">
-              Available Credits
-            </h2>
+            <h2 className="text-lg font-semibold">Available Credits</h2>
           </div>
 
           <p className="text-3xl font-bold">
@@ -255,16 +246,12 @@ async function CreatorDashboardContent() {
           </p>
 
           <Button asChild>
-            <Link href="/creator/topup">
-              Top Up Credits
-            </Link>
+            <Link href="/creator/topup">Top Up Credits</Link>
           </Button>
         </div>
 
         <div className="glass rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-2">
-            Profile
-          </h2>
+          <h2 className="text-lg font-semibold mb-2">Profile</h2>
 
           <p className="text-sm text-muted-foreground mb-4">
             {profile?.tiktok_username
@@ -273,16 +260,12 @@ async function CreatorDashboardContent() {
           </p>
 
           <Button variant="outline" asChild>
-            <Link href="/creator/profile">
-              Manage Profile
-            </Link>
+            <Link href="/creator/profile">Manage Profile</Link>
           </Button>
         </div>
 
         <div className="glass rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-2">
-            My Videos
-          </h2>
+          <h2 className="text-lg font-semibold mb-2">My Videos</h2>
 
           <p className="text-sm text-muted-foreground mb-4">
             Upload your videos and launch campaigns to get more likes.
@@ -290,15 +273,11 @@ async function CreatorDashboardContent() {
 
           <div className="flex flex-wrap gap-2">
             <Button asChild>
-              <Link href="/creator/videos">
-                View Videos
-              </Link>
+              <Link href="/creator/videos">View Videos</Link>
             </Button>
 
             <Button variant="outline" asChild>
-              <Link href="/creator/videos/new">
-                Add Video
-              </Link>
+              <Link href="/creator/videos/new">Add Video</Link>
             </Button>
           </div>
         </div>
@@ -344,7 +323,6 @@ function StatCard({
       </div>
 
       <p className="text-2xl font-bold">{value}</p>
-
       <p className="text-xs text-muted-foreground">{sub}</p>
     </div>
   );
